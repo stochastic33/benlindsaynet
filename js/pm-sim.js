@@ -1,0 +1,214 @@
+// Product Manager Simulator: browser side.
+// All rules, scoring and the AI call happen on the server (api/pm-sim.php).
+(() => {
+  const API = '/api/pm-sim.php';
+  const $ = (id) => document.getElementById(id);
+  const screens = { start: $('sim-start'), game: $('sim-game'), end: $('sim-end') };
+  const log = $('sim-log');
+  const form = $('sim-form');
+  const input = $('sim-text');
+  const send = $('sim-send');
+  const thinking = $('sim-thinking');
+  const errorBox = $('sim-error');
+  const sugg = $('sim-suggestions');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const LABELS = { customers: 'Customers', team: 'Team', stakeholders: 'Stakeholders', business: 'Business value', techDebt: 'Tech debt' };
+  let busy = false;
+
+  const show = (name) => {
+    Object.entries(screens).forEach(([k, el]) => { el.hidden = k !== name; });
+  };
+
+  const call = async (body) => {
+    const res = await fetch(API, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-PmSim': '1' },
+      body: JSON.stringify(body),
+    });
+    let data;
+    try { data = await res.json(); } catch (e) { data = { ok: false, message: 'The simulator is unavailable right now. Please try again later.' }; }
+    return data;
+  };
+
+  const setBusy = (on) => {
+    busy = on;
+    thinking.hidden = !on;
+    send.disabled = on;
+    input.disabled = on;
+    sugg.querySelectorAll('button').forEach((b) => { b.disabled = on; });
+  };
+
+  const showError = (msg) => {
+    errorBox.textContent = msg || '';
+    errorBox.hidden = !msg;
+  };
+
+  const scrollLog = () => { log.scrollTop = log.scrollHeight; };
+
+  // Typewriter effect; click the log to finish instantly
+  let skipTyping = false;
+  log.addEventListener('click', () => { skipTyping = true; });
+  const typeInto = (el, text) => new Promise((resolve) => {
+    if (reduceMotion || !text) { el.textContent = text; scrollLog(); resolve(); return; }
+    skipTyping = false;
+    let i = 0;
+    const step = () => {
+      if (skipTyping) { el.textContent = text; scrollLog(); resolve(); return; }
+      i = Math.min(text.length, i + 2);
+      el.textContent = text.slice(0, i);
+      if (i % 20 === 0) scrollLog();
+      if (i < text.length) setTimeout(step, 14); else { scrollLog(); resolve(); }
+    };
+    step();
+  });
+
+  const addLine = (cls, label) => {
+    const p = document.createElement('div');
+    p.className = 'sim-line ' + cls;
+    if (label) {
+      const l = document.createElement('span');
+      l.className = 'sim-line-label';
+      l.textContent = label;
+      p.appendChild(l);
+    }
+    const t = document.createElement('p');
+    p.appendChild(t);
+    log.appendChild(p);
+    scrollLog();
+    return t;
+  };
+
+  const addDeltas = (deltas) => {
+    if (!deltas) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'sim-chips';
+    Object.entries(deltas).forEach(([k, v]) => {
+      if (!v) return;
+      const good = k === 'techDebt' ? v < 0 : v > 0;
+      const c = document.createElement('span');
+      c.className = 'sim-chip ' + (good ? 'up' : 'down');
+      c.textContent = (v > 0 ? '+' : '') + v + ' ' + LABELS[k];
+      wrap.appendChild(c);
+    });
+    if (wrap.children.length) { log.appendChild(wrap); scrollLog(); }
+  };
+
+  const renderState = (s, deltas) => {
+    if (!s) return;
+    $('sim-week').textContent = Math.min(s.week, s.weeks);
+    $('sim-weeks').textContent = s.weeks;
+    $('sim-week-bar').style.width = (Math.min(s.week - (s.done ? 0 : 1), s.weeks) / s.weeks * 100) + '%';
+    $('sim-title').textContent = 'pm-simulator — ' + s.product.toLowerCase();
+    document.querySelectorAll('#sim-meters li').forEach((li) => {
+      const k = li.dataset.m;
+      const v = s.metrics[k];
+      li.querySelector('b').textContent = v;
+      li.querySelector('.sim-meter i').style.width = v + '%';
+      const d = deltas ? deltas[k] : 0;
+      const em = li.querySelector('.sim-delta');
+      if (d) {
+        const good = k === 'techDebt' ? d < 0 : d > 0;
+        em.textContent = (d > 0 ? '+' : '') + d;
+        em.className = 'sim-delta show ' + (good ? 'up' : 'down');
+        setTimeout(() => { em.className = 'sim-delta'; }, 2600);
+      }
+    });
+    const h = $('sim-hidden');
+    h.classList.toggle('found', !!s.hiddenFound);
+    $('sim-hidden-status').textContent = s.hiddenFound ? 'Found it!' : (s.clues > 0 ? 'Getting warmer…' : 'Not found yet');
+    $('sim-hidden-hint').textContent = s.hiddenFound ? 'A big boost to business value.' : 'Ask questions. Follow the data.';
+  };
+
+  const renderSuggestions = (list) => {
+    sugg.innerHTML = '';
+    (list || []).forEach((s) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sim-suggestion';
+      b.textContent = s;
+      b.addEventListener('click', () => { if (!busy) { input.value = s; submit(); } });
+      sugg.appendChild(b);
+    });
+  };
+
+  const showEvent = async (event, week) => {
+    if (!event) return;
+    await typeInto(addLine('event', 'Week ' + week), event);
+  };
+
+  const renderReview = (r) => {
+    $('rv-rating').textContent = r.rating;
+    $('rv-title').textContent = r.title;
+    $('rv-score').textContent = r.score;
+    $('rv-strengths').textContent = r.strengths;
+    $('rv-growth').textContent = r.growth;
+    $('rv-hidden-wrap').hidden = !r.hidden;
+    $('rv-hidden').textContent = r.hidden || '';
+    $('sim-end').dataset.rating = r.rating.startsWith('Exceeds') ? 'high' : (r.rating.startsWith('Meets') ? 'mid' : 'low');
+  };
+
+  const start = async (product) => {
+    if (busy) return;
+    showError('');
+    document.querySelectorAll('.sim-product').forEach((b) => { b.disabled = true; });
+    const data = await call({ action: 'start', product });
+    document.querySelectorAll('.sim-product').forEach((b) => { b.disabled = false; });
+    if (!data.ok) { alert(data.message || 'Something went wrong. Please try again.'); return; }
+    log.innerHTML = '';
+    $('sim-mode').hidden = !data.mock;
+    show('game');
+    renderState(data.state);
+    renderSuggestions([]);
+    screens.game.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    await showEvent(data.event, data.state.week);
+    renderSuggestions(data.suggestions);
+    input.focus({ preventScroll: true });
+  };
+
+  const submit = async () => {
+    const text = input.value.trim();
+    if (!text || busy) return;
+    showError('');
+    addLine('player').textContent = text;
+    input.value = '';
+    renderSuggestions([]);
+    setBusy(true);
+    let data;
+    try { data = await call({ action: 'turn', text }); } catch (e) { data = { ok: false, message: 'Connection lost. Please try again.' }; }
+    setBusy(false);
+
+    if (!data.ok) {
+      showError(data.message || 'Something went wrong. Please try again.');
+      if (data.restart) renderSuggestions([]);
+      input.focus({ preventScroll: true });
+      return;
+    }
+
+    await typeInto(addLine(data.offTopic ? 'aside' : 'outcome'), data.narration);
+    if (!data.offTopic) {
+      addDeltas(data.deltas);
+      renderState(data.state, data.deltas);
+      if (data.found) addLine('found').textContent = 'You uncovered the hidden value! Business value and stakeholder trust jump.';
+    }
+
+    if (data.review) {
+      renderReview(data.review);
+      setTimeout(() => {
+        show('end');
+        screens.end.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      }, reduceMotion ? 0 : 1600);
+      return;
+    }
+    if (!data.offTopic) await showEvent(data.event, data.state.week);
+    renderSuggestions(data.suggestions);
+    input.focus({ preventScroll: true });
+  };
+
+  document.querySelectorAll('.sim-product').forEach((b) => b.addEventListener('click', () => start(b.dataset.product)));
+  form.addEventListener('submit', (e) => { e.preventDefault(); submit(); });
+  $('sim-again').addEventListener('click', () => {
+    show('start');
+    screens.start.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  });
+})();

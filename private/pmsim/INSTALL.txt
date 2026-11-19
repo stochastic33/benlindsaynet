@@ -1,0 +1,21 @@
+PRODUCT MANAGER SIMULATOR - PRIVATE FILES
+=========================================
+
+This "pmsim" folder must sit NEXT TO public_html, not inside it:
+
+    (your home folder)/
+        public_html/      <- the website
+        pmsim/            <- this folder
+
+Setup:
+1. Upload this folder so it sits next to public_html (see above).
+2. In pmsim, copy "config.sample.php" to "config.php".
+3. Open config.php in the File Manager editor and paste your Anthropic API key
+   between the quotes on the 'anthropic_api_key' line. Save.
+4. Visit https://benlindsay.net/api/pmsim-check.php - every check should say true
+   and "mode" should say "live".
+
+Until a key is added, the game runs in free "demo mode" with a canned game master.
+
+The "data" folder is created automatically. It holds daily usage totals,
+rate-limit counters (hashed, never raw IP addresses) and an error log.

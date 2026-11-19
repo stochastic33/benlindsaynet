@@ -17,6 +17,6 @@ Plain HTML, CSS and JavaScript, with no build step. Edit a file, commit to `main
 
 ## Adding a case study
 
-1. Copy `case-studies/project-one.html` to a new file, such as `case-studies/my-project.html`.
+1. Copy `templates/case-study-template.html` into `case-studies/` to a new file, such as `case-studies/my-project.html`.
 2. Replace the bracketed placeholder text.
 3. Point a card's "Read case study" link in `index.html` to the new file.

@@ -91,7 +91,7 @@ p { margin: 0 0 1em; }
 .site-header.scrolled { border-bottom-color: var(--border); }
 .nav { display: flex; align-items: center; justify-content: space-between; height: 68px; }
 .brand { font-family: var(--font-display); font-weight: 600; color: var(--text); text-decoration: none; font-size: 1.1rem; letter-spacing: -0.02em; }
-.brand .dot { color: var(--accent); }
+.brand .creds { font-family: var(--font-mono); font-weight: 400; font-size: .72em; letter-spacing: .02em; color: var(--muted); }
 .nav-links { display: flex; align-items: center; gap: 26px; }
 .nav-links a {
   font-family: var(--font-mono); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase;

@@ -60,7 +60,12 @@
         <p>${esc(v.takeaway)}</p>
         ${id ? `<a class="card-link" href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener">Watch on YouTube <span class="arrow" aria-hidden="true">→</span></a>` : ''}
       </article>`;
-  }).join('');
+  }).join('') + (videos.length < 3 ? `
+      <div class="kb-more reveal" style="--d:${videos.length * 100}ms">
+        <p class="kb-empty-label">More on the way</p>
+        <h3>New summaries are coming soon.</h3>
+        <a class="card-link" href="${CHANNEL}?sub_confirmation=1" target="_blank" rel="noopener">Subscribe on YouTube <span class="arrow" aria-hidden="true">→</span></a>
+      </div>` : '');
 
   reveal();
 

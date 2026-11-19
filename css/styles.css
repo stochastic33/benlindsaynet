@@ -250,7 +250,13 @@ p { margin: 0 0 1em; }
 .kb-head .btn { margin-bottom: 36px; }
 .yt-icon { width: 18px; height: 18px; fill: currentColor; }
 
+.kb-cards { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
 .kb-card { padding: 0; }
+.kb-more {
+  border: 1px dashed var(--border); border-radius: var(--radius); padding: 28px;
+  display: flex; flex-direction: column; justify-content: flex-end; min-height: 220px;
+}
+.kb-more h3 { margin-bottom: 1em; }
 .kb-card > :not(.kb-cover) { margin-left: 24px; margin-right: 24px; }
 .kb-card .card-top { margin-top: 20px; margin-bottom: 14px; }
 .kb-card .card-link { margin-bottom: 24px; }

@@ -30,4 +30,12 @@
 
 window.PM_VIDEOS = [
 
+  {
+    title: "Inspired",
+    author: "Marty Cagan",
+    takeaway: "How top tech companies build products customers love: empowered teams discover what's worth building before they build it.",
+    area: "Product Strategy",
+    youtube: "rBRKIPIiEZs"
+  },
+
 ];

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,13 +9,15 @@
   <meta property="og:description" content="13 years building data and AI products that people actually use.">
   <meta property="og:url" content="https://benlindsay.net/">
   <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0b0d10">
   <link rel="canonical" href="https://benlindsay.net/">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232f5bea'/><text x='50' y='66' font-size='48' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'>BL</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230b0d10'/><text x='50' y='64' font-size='44' text-anchor='middle' fill='%237aa2ff' font-family='Arial' font-weight='700'>BL</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script>
+    document.documentElement.classList.add('js');
     try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
   </script>
 </head>
@@ -24,14 +26,14 @@
 
   <header class="site-header">
     <div class="container nav">
-      <a class="brand" href="/">Ben Lindsay</a>
+      <a class="brand" href="/">Ben Lindsay<span class="dot">.</span></a>
       <button class="nav-toggle" aria-expanded="false" aria-controls="nav-links" aria-label="Open menu">
         <span></span><span></span><span></span>
       </button>
       <nav id="nav-links" class="nav-links" aria-label="Main">
         <a href="#about">About</a>
         <a href="#work">Work</a>
-        <a href="#skills">Skills</a>
+        <a href="#capabilities">Capabilities</a>
         <a href="#contact">Contact</a>
         <button class="theme-toggle" aria-label="Switch light or dark theme" title="Switch theme">
           <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -44,40 +46,46 @@
   <main id="main">
     <!-- HERO -->
     <section class="hero">
-      <div class="container">
-        <p class="eyebrow">Product Manager · Data &amp; AI</p>
-        <h1>I turn data and AI into products people actually use.</h1>
-        <p class="lede">
-          13 years leading product for data platforms, machine learning and AI experiences,
-          from first discovery to measurable results at scale.
-        </p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#work">See my work</a>
-          <a class="btn btn-ghost" href="assets/resume.pdf" target="_blank" rel="noopener">Download resume</a>
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Product Manager · Data &amp; AI<span class="cursor" aria-hidden="true"></span></p>
+          <h1 class="split">I turn data and AI into products people actually use.</h1>
+          <p class="lede reveal" style="--d:500ms">
+            13 years leading product for data platforms, machine learning and AI experiences,
+            from first discovery to measurable results at scale.
+          </p>
+          <div class="hero-actions reveal" style="--d:650ms">
+            <a class="btn btn-primary" href="#work">See my work <span class="arrow" aria-hidden="true">→</span></a>
+            <a class="btn btn-ghost" href="assets/resume.pdf" target="_blank" rel="noopener">Resume</a>
+          </div>
+          <ul class="stats reveal" style="--d:800ms" aria-label="Highlights">
+            <li><strong>13</strong><span>Years in product</span></li>
+            <li><strong>[X]</strong><span>[Products launched]</span></li>
+            <li><strong>[$Y]</strong><span>[Impact delivered]</span></li>
+          </ul>
         </div>
-        <ul class="stats" aria-label="Highlights">
-          <li><strong>13</strong><span>years in product</span></li>
-          <li><strong>[X]</strong><span>[placeholder: products launched]</span></li>
-          <li><strong>[$Y]</strong><span>[placeholder: impact delivered]</span></li>
-        </ul>
+        <div class="hero-visual" aria-hidden="true">
+          <canvas class="orb"></canvas>
+          <span class="orb-caption">fig. 01 — signal from noise</span>
+        </div>
       </div>
     </section>
 
     <!-- ABOUT -->
     <section id="about" class="section">
       <div class="container two-col">
-        <div>
-          <h2>About</h2>
+        <div class="reveal">
+          <p class="label"><span class="num">01</span> / About</p>
         </div>
-        <div class="prose">
+        <div class="prose reveal" style="--d:100ms">
           <p>
-            I'm a product manager who sits where data, AI and customer needs meet. For more than a decade
-            I've worked with engineers, data scientists and business leaders to ship products that
-            make complicated systems feel simple.
+            I'm a product manager who works where data, AI and customer needs meet, making
+            complicated systems feel simple.
           </p>
           <p>
-            [Placeholder: a sentence about your current focus, for example "Today I lead product for
-            ... at a large retailer, where my team ..."]
+            For more than a decade I've partnered with engineers, data scientists and business leaders
+            to ship products that matter. [Placeholder: a sentence about your current focus, for example
+            "Today I lead product for ... at a large retailer, where my team ..."]
           </p>
           <p>
             I care about clear problem framing, fast learning loops, and results you can measure.
@@ -90,72 +98,73 @@
     <!-- WORK -->
     <section id="work" class="section section-alt">
       <div class="container">
-        <h2>Selected work</h2>
-        <p class="section-intro">A few projects that show how I work. Details are shared at a level that respects confidentiality.</p>
+        <p class="label reveal"><span class="num">02</span> / Selected work</p>
+        <h2 class="reveal">Work that moved the numbers.</h2>
+        <p class="section-intro reveal">A few projects that show how I work. Details are shared at a level that respects confidentiality.</p>
         <div class="cards">
-          <article class="card">
-            <p class="card-tag">AI / ML</p>
+          <article class="card reveal">
+            <div class="card-top"><p class="card-tag">AI / ML</p><span class="card-num">01</span></div>
             <h3>[Placeholder: Project one title]</h3>
             <p>[One or two sentences: the problem, what you built, and the result.]</p>
             <p class="card-metric">[+X% key metric]</p>
-            <a class="card-link" href="case-studies/project-one.html">Read case study <span aria-hidden="true">→</span></a>
+            <a class="card-link" href="case-studies/project-one.html">Read case study <span class="arrow" aria-hidden="true">→</span></a>
           </article>
-          <article class="card">
-            <p class="card-tag">Data platform</p>
+          <article class="card reveal" style="--d:100ms">
+            <div class="card-top"><p class="card-tag">Data platform</p><span class="card-num">02</span></div>
             <h3>[Placeholder: Project two title]</h3>
             <p>[One or two sentences: the problem, what you built, and the result.]</p>
             <p class="card-metric">[$X saved / Y hours reduced]</p>
-            <a class="card-link" href="case-studies/project-one.html">Read case study <span aria-hidden="true">→</span></a>
+            <a class="card-link" href="case-studies/project-one.html">Read case study <span class="arrow" aria-hidden="true">→</span></a>
           </article>
-          <article class="card">
-            <p class="card-tag">Customer experience</p>
+          <article class="card reveal" style="--d:200ms">
+            <div class="card-top"><p class="card-tag">Customer experience</p><span class="card-num">03</span></div>
             <h3>[Placeholder: Project three title]</h3>
             <p>[One or two sentences: the problem, what you built, and the result.]</p>
             <p class="card-metric">[X users / Y% adoption]</p>
-            <a class="card-link" href="case-studies/project-one.html">Read case study <span aria-hidden="true">→</span></a>
+            <a class="card-link" href="case-studies/project-one.html">Read case study <span class="arrow" aria-hidden="true">→</span></a>
           </article>
         </div>
       </div>
     </section>
 
-    <!-- SKILLS -->
-    <section id="skills" class="section">
-      <div class="container two-col">
-        <div>
-          <h2>Skills</h2>
-        </div>
-        <div class="skill-groups">
-          <div>
-            <h3>Product</h3>
-            <ul class="chips">
-              <li>Product strategy</li><li>Roadmapping</li><li>Discovery</li>
-              <li>Experimentation</li><li>OKRs &amp; metrics</li><li>Stakeholder alignment</li>
-            </ul>
-          </div>
-          <div>
-            <h3>Data &amp; AI</h3>
-            <ul class="chips">
-              <li>Machine learning products</li><li>Generative AI</li><li>Data platforms</li>
-              <li>Analytics</li><li>Personalization</li><li>[Placeholder]</li>
-            </ul>
-          </div>
-          <div>
-            <h3>Tools</h3>
-            <ul class="chips">
-              <li>SQL</li><li>Jira</li><li>Figma</li><li>[Placeholder]</li><li>[Placeholder]</li>
-            </ul>
-          </div>
-        </div>
+    <!-- CAPABILITIES -->
+    <section id="capabilities" class="section">
+      <div class="container">
+        <p class="label reveal"><span class="num">03</span> / Capabilities</p>
+        <h2 class="reveal">What I bring</h2>
+        <ol class="rows">
+          <li class="row reveal">
+            <span class="row-num">01</span>
+            <h3>Product strategy &amp; discovery</h3>
+            <ul class="chips"><li>Vision &amp; roadmaps</li><li>Customer research</li><li>Prioritization</li><li>OKRs &amp; metrics</li></ul>
+          </li>
+          <li class="row reveal">
+            <span class="row-num">02</span>
+            <h3>AI &amp; machine learning products</h3>
+            <ul class="chips"><li>Generative AI</li><li>ML model lifecycle</li><li>Personalization</li><li>Responsible AI</li></ul>
+          </li>
+          <li class="row reveal">
+            <span class="row-num">03</span>
+            <h3>Data platforms &amp; analytics</h3>
+            <ul class="chips"><li>Data products</li><li>Experimentation</li><li>SQL</li><li>[Placeholder]</li></ul>
+          </li>
+          <li class="row reveal">
+            <span class="row-num">04</span>
+            <h3>Leadership &amp; delivery</h3>
+            <ul class="chips"><li>Cross-functional teams</li><li>Stakeholder alignment</li><li>Agile delivery</li><li>[Placeholder]</li></ul>
+          </li>
+        </ol>
       </div>
     </section>
 
     <!-- CONTACT -->
     <section id="contact" class="section section-alt">
       <div class="container contact">
-        <h2>Let's talk</h2>
-        <p class="section-intro">I'm always happy to talk about product, data and AI.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="mailto:[placeholder-email]">Email me</a>
+        <p class="label reveal"><span class="num">04</span> / Contact</p>
+        <h2 class="reveal">Let's build something useful.</h2>
+        <p class="section-intro reveal">I'm always happy to talk about product, data and AI.</p>
+        <div class="hero-actions reveal">
+          <a class="btn btn-primary" href="mailto:[placeholder-email]">Email me <span class="arrow" aria-hidden="true">→</span></a>
           <a class="btn btn-ghost" href="https://www.linkedin.com/in/[placeholder]" target="_blank" rel="noopener">LinkedIn</a>
         </div>
       </div>
@@ -164,10 +173,12 @@
 
   <footer class="site-footer">
     <div class="container">
-      <p>© <span id="year">2026</span> Ben Lindsay · benlindsay.net</p>
+      <p>© <span id="year">2026</span> Ben Lindsay</p>
+      <p>benlindsay.net</p>
     </div>
   </footer>
 
   <script src="js/main.js"></script>
+  <script src="js/orb.js"></script>
 </body>
 </html>

@@ -34,6 +34,30 @@ session_set_cookie_params([
 ]);
 session_start();
 
+/* ---------------- Hidden entrance ----------------
+ * The page answers "Not found" unless the visitor first pressed the secret
+ * key sequence on the site (js/main.js calls ?unlock), which opens it for
+ * 10 minutes. This only hides the page; the password is the real lock.
+ */
+if (isset($_GET['unlock'])) {
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $okOrigin = $origin === '' || in_array($origin, (array)($config['allowed_origins'] ?? []), true);
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_SERVER['HTTP_X_PMSIM_GATE'] ?? '') === '1' && $okOrigin) {
+        $_SESSION['gate'] = time();
+        header('Content-Type: application/json');
+        echo '{"ok":true}';
+        exit;
+    }
+    http_response_code(404);
+    echo 'Not found.';
+    exit;
+}
+if (empty($_SESSION['admin']) && (int)($_SESSION['gate'] ?? 0) < time() - 600) {
+    http_response_code(404);
+    echo 'Not found.';
+    exit;
+}
+
 $kb = pmsim_knowledge();
 $self = strtok($_SERVER['REQUEST_URI'] ?? 'pmsim-admin.php', '?');
 $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');

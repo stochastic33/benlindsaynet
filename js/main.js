@@ -95,3 +95,26 @@ document.querySelectorAll('.card').forEach((card) => {
 // Footer year
 const year = document.getElementById('year');
 if (year) year.textContent = new Date().getFullYear();
+
+// Hidden admin entrance: press ↑ ↑ ↓ ↓ (within a few seconds) anywhere outside a text box
+(() => {
+  const SEQ = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown'];
+  let pos = 0;
+  let last = 0;
+  document.addEventListener('keydown', async (e) => {
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) { pos = 0; return; }
+    const now = Date.now();
+    if (now - last > 3000) pos = 0;
+    last = now;
+    pos = e.key === SEQ[pos] ? pos + 1 : (e.key === SEQ[0] ? 1 : 0);
+    if (pos < SEQ.length) return;
+    pos = 0;
+    try {
+      const res = await fetch('/api/pmsim-admin.php?unlock=1', {
+        method: 'POST', credentials: 'same-origin', headers: { 'X-PmSim-Gate': '1' },
+      });
+      if (res.ok) window.location.href = '/api/pmsim-admin.php';
+    } catch (err) { /* stay quiet */ }
+  });
+})();

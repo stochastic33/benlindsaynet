@@ -114,6 +114,24 @@
         setTimeout(() => { em.className = 'sim-delta'; }, 2600);
       }
     });
+    if (typeof s.score === 'number') {
+      const target = s.target || 70;
+      const status = s.score >= target ? 'track' : (s.score >= target - 10 ? 'close' : 'risk');
+      const perf = $('sim-perf');
+      const prev = Number($('sim-score').textContent);
+      perf.dataset.status = status;
+      $('sim-score').textContent = s.score;
+      $('sim-target').textContent = target;
+      $('sim-perf-status').textContent = s.done
+        ? (s.score >= target ? 'Renewed' : 'Not renewed')
+        : ({ track: 'On track', close: 'Close', risk: 'At risk' })[status];
+      $('sim-perf-fill').style.width = s.score + '%';
+      $('sim-perf-mark').style.left = target + '%';
+      if (deltas && prev !== s.score) {
+        perf.classList.remove('pulse-up', 'pulse-down'); void perf.offsetWidth;
+        perf.classList.add(s.score > prev ? 'pulse-up' : 'pulse-down');
+      }
+    }
     const h = $('sim-hidden');
     h.classList.toggle('found', !!s.hiddenFound);
     $('sim-hidden-status').textContent = s.hiddenFound ? 'Found it!' : (s.clues > 0 ? 'Getting warmer…' : 'Not found yet');
@@ -138,14 +156,16 @@
   };
 
   const renderReview = (r) => {
+    $('rv-outcome').textContent = r.won ? 'You earned a new contract!' : 'Your contract was not renewed.';
     $('rv-rating').textContent = r.rating;
+    $('rv-target').textContent = 'Renewal target: ' + r.target;
     $('rv-title').textContent = r.title;
     $('rv-score').textContent = r.score;
     $('rv-strengths').textContent = r.strengths;
     $('rv-growth').textContent = r.growth;
     $('rv-hidden-wrap').hidden = !r.hidden;
     $('rv-hidden').textContent = r.hidden || '';
-    $('sim-end').dataset.rating = r.rating.startsWith('Exceeds') ? 'high' : (r.rating.startsWith('Meets') ? 'mid' : 'low');
+    $('sim-end').dataset.rating = r.won ? 'high' : 'low';
   };
 
   const start = async (product) => {

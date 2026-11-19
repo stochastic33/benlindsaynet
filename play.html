@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Product Manager Simulator | Ben Lindsay</title>
-  <meta name="description" content="Can you find the hidden value in 8 weeks? An AI-powered product manager simulator by Ben Lindsay.">
+  <meta name="description" content="Can you earn a new contract in 8 weeks? An AI-powered product manager simulator by Ben Lindsay.">
   <meta property="og:title" content="Product Manager Simulator | Ben Lindsay">
-  <meta property="og:description" content="Can you find the hidden value in 8 weeks? An AI-powered product manager simulator.">
+  <meta property="og:description" content="Can you earn a new contract in 8 weeks? An AI-powered product manager simulator.">
   <meta property="og:url" content="https://benlindsay.net/play.html">
   <meta property="og:type" content="website">
   <meta name="theme-color" content="#0b0d10">
@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=20261120a">
-  <link rel="stylesheet" href="css/sim.css?v=20261120a">
+  <link rel="stylesheet" href="css/styles.css?v=20261120b">
+  <link rel="stylesheet" href="css/sim.css?v=20261120b">
   <script>
     document.documentElement.classList.add('js');
     try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
@@ -49,8 +49,8 @@
   <main id="main" class="sim">
     <section class="container sim-intro">
       <p class="label"><span class="num">&gt;_</span> Product Manager Simulator</p>
-      <h1 class="split">Can you find the hidden value in 8 weeks?</h1>
-      <p class="lede reveal" style="--d:400ms">You've just joined a new company as its product manager. Each turn is one week. Type what you'd do, balance customers, your team, stakeholders, business value and tech debt, and look for the hidden opportunity everyone else has missed.</p>
+      <h1 class="split">Can you earn a new contract in 8 weeks?</h1>
+      <p class="lede reveal" style="--d:400ms">You're a product manager on an 8-week contract. Each turn is one week: type what you'd do, balance customers, your team, stakeholders, business value and tech debt, and watch your performance score live. Reach the renewal target by week 8 to win a new contract. Finding the hidden opportunity everyone else has missed gives you a big boost.</p>
     </section>
 
     <!-- START -->
@@ -103,6 +103,11 @@
             <span class="sim-week-num"><b id="sim-week">1</b> / <span id="sim-weeks">8</span></span>
             <div class="sim-week-bar"><i id="sim-week-bar"></i></div>
           </div>
+          <div class="sim-perf" id="sim-perf" data-status="risk">
+            <div class="sim-perf-top"><span class="sim-dash-label">Performance</span><span class="sim-perf-status" id="sim-perf-status">At risk</span></div>
+            <p class="sim-perf-num"><b id="sim-score">0</b><small>renewal at <span id="sim-target">70</span></small></p>
+            <div class="sim-perf-bar" aria-hidden="true"><i id="sim-perf-fill"></i><span class="sim-perf-mark" id="sim-perf-mark"></span></div>
+          </div>
           <ul class="sim-meters" id="sim-meters">
             <li data-m="customers" data-short="Cust."><span class="sim-dash-label">Customers</span><b>50</b><div class="sim-meter"><i></i></div><em class="sim-delta"></em></li>
             <li data-m="team" data-short="Team"><span class="sim-dash-label">Team</span><b>50</b><div class="sim-meter"><i></i></div><em class="sim-delta"></em></li>
@@ -123,12 +128,13 @@
     <section class="container sim-screen" id="sim-end" hidden>
       <div class="sim-review">
         <p class="label"><span class="num">Q</span> / Performance review</p>
+        <p class="sim-outcome" id="rv-outcome">Contract renewed</p>
         <div class="sim-review-top">
           <div>
-            <p class="sim-rating" id="rv-rating">Meets expectations</p>
+            <p class="sim-rating" id="rv-rating">Contract renewed</p>
             <h2 id="rv-title">The Pragmatic Builder</h2>
           </div>
-          <div class="sim-score"><b id="rv-score">0</b><span>/ 100</span></div>
+          <div class="sim-score"><b id="rv-score">0</b><span>/ 100</span><small id="rv-target">Renewal target: 70</small></div>
         </div>
         <dl class="sim-review-body">
           <div><dt>Strengths</dt><dd id="rv-strengths"></dd></div>
@@ -155,7 +161,7 @@
     </div>
   </footer>
 
-  <script src="js/main.js?v=20261120a"></script>
-  <script src="js/pm-sim.js?v=20261120a"></script>
+  <script src="js/main.js?v=20261120b"></script>
+  <script src="js/pm-sim.js?v=20261120b"></script>
 </body>
 </html>

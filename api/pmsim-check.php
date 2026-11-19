@@ -37,6 +37,9 @@ if ($checks['library_found'] && $checks['php_ok']) {
         $u = pmsim_game()->todayUsage();
         $checks['today_calls'] = $u['calls'] ?? 0;
         $checks['today_cost_usd'] = round((float)($u['cost'] ?? 0), 4);
+        $checks['knowledge_videos'] = count(pmsim_knowledge()->videos());
+        $checks['knowledge_cards'] = count(pmsim_knowledge()->cards());
+        $checks['admin_page_enabled'] = strlen((string)(pmsim_config()['admin_password'] ?? '')) >= 10;
     } catch (Throwable $e) {
         $checks['engine_loads'] = false;
         $checks['engine_error'] = get_class($e);

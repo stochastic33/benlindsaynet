@@ -154,6 +154,8 @@
 .sim-review-body { display: grid; gap: 18px; margin: 0 0 8px; padding: 22px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .sim-review-body dt { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .sim-review-body dd { margin: 4px 0 0; }
+#rv-watch { font-weight: 600; text-decoration: none; }
+#rv-watch:hover { text-decoration: underline; }
 
 .sim-about { margin-top: 28px; }
 .sim-about p { font-size: .85rem; color: var(--faint); max-width: 70ch; }

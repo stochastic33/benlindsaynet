@@ -19,3 +19,16 @@ Until a key is added, the game runs in free "demo mode" with a canned game maste
 
 The "data" folder is created automatically. It holds daily usage totals,
 rate-limit counters (hashed, never raw IP addresses) and an error log.
+
+VIDEO LIBRARY (makes the game smarter with every video)
+-------------------------------------------------------
+1. In config.php, set 'admin_password' to a long, unique password
+   (at least 10 characters). The admin page stays off while it's empty.
+2. Visit https://benlindsay.net/api/pmsim-admin.php and sign in.
+3. For each new video: paste the YouTube link, title, book and author, then
+   paste the transcript (YouTube Studio > Subtitles > your video > Download)
+   or upload the .txt/.srt file. Click "Build cards".
+4. Review the draft cards: edit, untick any you don't want, then
+   "Approve and publish". The game starts using them immediately.
+
+Approved cards are stored in pmsim/knowledge/cards.json.

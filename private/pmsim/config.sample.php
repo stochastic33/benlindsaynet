@@ -22,6 +22,15 @@ return [
     // Set to true to force the mock game master even when a key is present
     'mock' => false,
 
+    // Model that turns video transcripts into knowledge cards (admin page only).
+    // Opus writes the best cards (about 5-10 cents per video).
+    // Use 'claude-haiku-5-5' if card building ever times out on your hosting.
+    'builder_model' => 'claude-opus-5-5',
+
+    // Password for the private admin page at /api/pmsim-admin.php.
+    // Use a long, unique password. Leave empty to keep the admin page switched off.
+    'admin_password' => '',
+
     // Only these sites may use the game's API
     'allowed_origins' => ['https://benlindsay.net', 'https://www.benlindsay.net'],
 ];

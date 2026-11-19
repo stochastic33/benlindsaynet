@@ -34,11 +34,13 @@ final class Game
 {
     private array $config;
     private string $dataDir;
+    private ?Knowledge $kb;
 
-    public function __construct(array $config, string $dataDir)
+    public function __construct(array $config, string $dataDir, ?Knowledge $kb = null)
     {
         $this->config  = $config;
         $this->dataDir = $dataDir;
+        $this->kb      = $kb;
         if (!is_dir($dataDir)) {
             @mkdir($dataDir, 0750, true);
         }
@@ -105,13 +107,24 @@ final class Game
         if (!$this->rateAllow($ipKey, 'games', IP_GAMES_PER_HOUR)) {
             return $this->error("You've started a lot of games this hour. Take a coffee break and come back soon.", 429);
         }
-        $hidden = array_rand(self::hiddenValues());
+        // Hidden value: built-in ideas plus any approved "hidden" cards from the video library
+        $pool = [];
+        foreach (self::hiddenValues() as $text) {
+            $pool[] = ['text' => $text, 'card' => null];
+        }
+        foreach ($this->kb ? $this->kb->hiddenCards() : [] as $c) {
+            $pool[] = ['text' => $c['summary'], 'card' => $c['id']];
+            $pool[] = ['text' => $c['summary'], 'card' => $c['id']]; // video ideas are twice as likely
+        }
+        $hidden = $pool[array_rand($pool)];
         $game = [
             'product'     => $productId,
             'week'        => 1,
             'calls'       => 0,
             'metrics'     => ['customers' => 50, 'team' => 55, 'stakeholders' => 50, 'business' => 45, 'techDebt' => 40],
-            'hidden'      => $hidden,
+            'hidden'      => $hidden['text'],
+            'hiddenCard'  => $hidden['card'],
+            'usedScenarios' => [],
             'hiddenFound' => false,
             'clues'       => 0,
             'history'     => [],
@@ -135,6 +148,7 @@ final class Game
         if (!is_array($game)) {
             return $this->error('Your session expired. Start a new game.', 409, ['restart' => true]);
         }
+        unset($game['pendingScenario']);
         if ($game['done']) {
             return $this->error('This quarter is over. Start a new game to play again.', 409, ['restart' => true]);
         }
@@ -196,6 +210,9 @@ final class Game
             }
         }
 
+        if (!empty($_SESSION['pmsim']['pendingScenario'])) {
+            $game['usedScenarios'][] = $_SESSION['pmsim']['pendingScenario'];
+        }
         $narration = self::trimText((string)($result['narration'] ?? ''), 900);
         $game['history'][] = ['week' => $game['week'], 'action' => $action, 'outcome' => self::trimText($narration, 220)];
         $game['history'] = array_slice($game['history'], -4);
@@ -218,7 +235,8 @@ final class Game
                 'title'     => self::trimText((string)($result['review']['title'] ?? 'Product Manager'), 60),
                 'strengths' => self::trimText((string)($result['review']['strengths'] ?? ''), 400),
                 'growth'    => self::trimText((string)($result['review']['growth'] ?? ''), 400),
-                'hidden'    => $game['hiddenFound'] ? null : self::hiddenValues()[$game['hidden']],
+                'hidden'    => $game['hiddenFound'] ? null : $game['hidden'],
+                'watch'     => $this->kb ? $this->kb->recommend($game['metrics']) : null,
             ];
             $response['event'] = '';
             $response['suggestions'] = [];
@@ -255,13 +273,24 @@ final class Game
             ? 'ALREADY DISCOVERED. Set clueGiven and discovered to false.'
             : "NOT YET DISCOVERED. Clues given so far: {$game['clues']}.";
 
-        $context = "<game_state>\n"
+        $knowledge = '';
+        $pick = $this->kb ? $this->kb->pick($game['event'] . ' ' . $action, $game['usedScenarios'] ?? []) : ['principles' => [], 'scenario' => null];
+        foreach ($pick['principles'] as $c) {
+            $knowledge .= "Principle \"{$c['title']}\" (from {$c['book']}): {$c['summary']} Good: {$c['good']} Traps: {$c['traps']}\n";
+        }
+        if (!$final && $pick['scenario']) {
+            $c = $pick['scenario'];
+            $knowledge .= "Scenario seed for next week \"{$c['title']}\": {$c['summary']} Good handling: {$c['good']} Traps: {$c['traps']}\n";
+            $_SESSION['pmsim']['pendingScenario'] = $c['id'];
+        }
+
+        $context = ($knowledge !== '' ? "<knowledge>\n{$knowledge}</knowledge>\n\n" : '') . "<game_state>\n"
             . "Product: {$p['name']}, {$p['pitch']}.\n"
             . "Week: {$game['week']} of " . WEEKS . ($final ? " (FINAL WEEK: also write the performance review)" : '') . "\n"
             . "Metrics (0-100): customers {$game['metrics']['customers']}, team {$game['metrics']['team']}, "
             . "stakeholders {$game['metrics']['stakeholders']}, business value {$game['metrics']['business']}, "
             . "tech debt {$game['metrics']['techDebt']} (lower is better)\n"
-            . "Hidden value (secret, never state it outright unless the player discovers it): " . self::hiddenValues()[$game['hidden']] . "\n"
+            . "Hidden value (secret, never state it outright unless the player discovers it): " . $game['hidden'] . "\n"
             . "Hidden value status: {$hiddenStatus}\n"
             . "Recent weeks:\n{$recap}"
             . "This week's situation: {$game['event']}\n"
@@ -333,6 +362,10 @@ Your job each turn:
 3. Set metric changes as whole numbers from -12 to 12. Most changes are between -6 and 6. Good decisions usually involve a trade-off: they help one or two metrics and cost another. Only exceptional moves earn 8 or more. Metrics: customers (satisfaction), team (morale and capacity), stakeholders (leadership trust), business (value created), techDebt (higher is worse, so a positive number means more debt).
 4. Unless it is the final week, write the next week's situation in 25 to 50 words: a new, specific challenge that follows from what just happened.
 5. Offer exactly 3 short suggested actions (2 to 6 words each) that fit the next situation.
+
+Knowledge from Ben's video library:
+- When a <knowledge> block is present, use its principles to judge the player's action: reward actions that match "Good" and give believable costs to actions that fall into "Traps". Never quote the cards or mention the books by name in the narration.
+- When it includes a scenario seed, base next week's situation on it, adapted to this product and the story so far.
 
 The hidden value:
 - Each game has a secret opportunity, given in the game state. The player wins a big bonus if they uncover it.

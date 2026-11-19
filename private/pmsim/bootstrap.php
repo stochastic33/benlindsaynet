@@ -5,6 +5,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/knowledge.php';
 require __DIR__ . '/game.php';
 
 function pmsim_config(): array
@@ -16,7 +17,12 @@ function pmsim_config(): array
 
 function pmsim_game(): \PmSim\Game
 {
-    return new \PmSim\Game(pmsim_config(), __DIR__ . '/data');
+    return new \PmSim\Game(pmsim_config(), __DIR__ . '/data', pmsim_knowledge());
+}
+
+function pmsim_knowledge(): \PmSim\Knowledge
+{
+    return new \PmSim\Knowledge(__DIR__ . '/knowledge');
 }
 
 /** A salted hash of the visitor's IP: used only for rate limits, never stored in plain form. */

@@ -165,6 +165,13 @@
     $('rv-growth').textContent = r.growth;
     $('rv-hidden-wrap').hidden = !r.hidden;
     $('rv-hidden').textContent = r.hidden || '';
+    $('rv-watch-wrap').hidden = !r.watch;
+    if (r.watch) {
+      $('rv-watch-reason').textContent = r.watch.reason;
+      const link = $('rv-watch');
+      link.href = /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/.test(r.watch.url) ? r.watch.url : 'https://www.youtube.com/@pmknowledgebase';
+      link.textContent = 'Watch: ' + (r.watch.book || r.watch.title) + ' in minutes →';
+    }
     $('sim-end').dataset.rating = r.won ? 'high' : 'low';
   };
 

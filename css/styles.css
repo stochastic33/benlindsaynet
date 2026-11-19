@@ -248,7 +248,8 @@ p { margin: 0 0 1em; }
 .case-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin: 36px 0 0; padding: 22px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .case-meta dt { font-family: var(--font-mono); color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
 .case-meta dd { margin: 6px 0 0; font-weight: 600; }
-.case-body { max-width: 760px; padding-bottom: 96px; }
+.case-body { padding-bottom: 96px; }
+.case-body > * { max-width: 760px; }
 .case-body h2 { margin-top: 56px; font-size: 1.7rem; }
 .case-body ul { padding-left: 1.2em; }
 .case-body li { margin-bottom: .4em; }

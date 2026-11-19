@@ -43,6 +43,33 @@ document.querySelectorAll('.split').forEach((el) => {
   ).join(' ');
 });
 
+// Eyebrow typewriter: every few seconds the cursor deletes the phrase and types the next one.
+// Edit the list in the data-words attribute in index.html.
+document.querySelectorAll('.typed[data-words]').forEach((el) => {
+  let words;
+  try { words = JSON.parse(el.dataset.words); } catch (e) { return; }
+  if (!words.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box = el.closest('.eyebrow');
+  const HOLD = 2800, DELETE_MS = 40, TYPE_MS = 80, GAP = 350;
+  let i = Math.max(0, words.indexOf(el.textContent));
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  (async () => {
+    await wait(HOLD + 1200);
+    for (;;) {
+      if (document.hidden) { await wait(500); continue; }
+      box && box.classList.add('typing');
+      let text = el.textContent;
+      while (text.length) { text = text.slice(0, -1); el.textContent = text; await wait(DELETE_MS); }
+      await wait(GAP);
+      i = (i + 1) % words.length;
+      const next = words[i];
+      for (let n = 1; n <= next.length; n++) { el.textContent = next.slice(0, n); await wait(TYPE_MS + Math.random() * 50); }
+      box && box.classList.remove('typing');
+      await wait(HOLD);
+    }
+  })();
+});
+
 // Fade sections in as they scroll into view
 const revealEls = document.querySelectorAll('.reveal');
 if ('IntersectionObserver' in window) {

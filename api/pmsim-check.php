@@ -7,7 +7,22 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
-$private = dirname(__DIR__, 2) . '/pmsim';
+/** Find the private "pmsim" folder: next to public_html, or directly in the home folder. */
+function pmsim_locate(): ?string
+{
+    $home = getenv('HOME') ?: '';
+    if ($home === '' && function_exists('posix_getpwuid') && function_exists('posix_geteuid')) {
+        $home = (string)(posix_getpwuid(posix_geteuid())['dir'] ?? '');
+    }
+    $candidates = [dirname(__DIR__, 2) . '/pmsim', dirname(__DIR__, 3) . '/pmsim', dirname(__DIR__, 4) . '/pmsim'];
+    if ($home !== '') array_unshift($candidates, rtrim($home, '/') . '/pmsim');
+    foreach ($candidates as $dir) {
+        if (is_file($dir . '/bootstrap.php')) return $dir;
+    }
+    return null;
+}
+
+$private = pmsim_locate() ?? (dirname(__DIR__, 2) . '/pmsim');
 $checks = [
     'php_version'          => PHP_VERSION,
     'php_ok'               => version_compare(PHP_VERSION, '8.1.0', '>='),

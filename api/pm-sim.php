@@ -19,11 +19,26 @@ function pmsim_respond(array $body): void
     exit;
 }
 
-$private = dirname(__DIR__, 2) . '/pmsim/bootstrap.php';
-if (!is_file($private)) {
+/** Find the private "pmsim" folder: next to public_html, or directly in the home folder. */
+function pmsim_locate(): ?string
+{
+    $home = getenv('HOME') ?: '';
+    if ($home === '' && function_exists('posix_getpwuid') && function_exists('posix_geteuid')) {
+        $home = (string)(posix_getpwuid(posix_geteuid())['dir'] ?? '');
+    }
+    $candidates = [dirname(__DIR__, 2) . '/pmsim', dirname(__DIR__, 3) . '/pmsim', dirname(__DIR__, 4) . '/pmsim'];
+    if ($home !== '') array_unshift($candidates, rtrim($home, '/') . '/pmsim');
+    foreach ($candidates as $dir) {
+        if (is_file($dir . '/bootstrap.php')) return $dir;
+    }
+    return null;
+}
+
+$privateDir = pmsim_locate();
+if ($privateDir === null) {
     pmsim_respond(['ok' => false, 'status' => 500, 'message' => 'The simulator is not installed yet.']);
 }
-require $private;
+require $privateDir . '/bootstrap.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     pmsim_respond(['ok' => false, 'status' => 405, 'message' => 'Use POST.']);

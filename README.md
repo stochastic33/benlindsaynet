@@ -7,8 +7,7 @@ AI-powered Product Manager Simulator.
 
 ## Structure
 
-The website lives in `public/`. Enhance's GitHub deploy uses `public` as the
-publish directory, so only that folder is served to visitors.
+The website lives in `public/`. Only that folder is copied to the live site.
 
 ```
 public/                       The website (Enhance publish directory)
@@ -29,11 +28,29 @@ templates/                    Starting point for new case studies
 
 ## Deploying
 
-- Pushing to `main` deploys automatically. In Enhance, the GitHub deploy's publish
-  directory is set to `public`, which becomes the website's document root.
-- The engine runs from a `pmsim` folder in the website's home folder (next to `deploys/`),
-  together with the Anthropic PHP library (`composer install` in that folder creates `vendor/`).
-- `pmsim/config.php` holds the API key and admin password. It is never committed.
+Pushing to `main` deploys automatically through Enhance's GitHub deploy. Each deploy
+is cloned into `~/deploys/<commit>`, then this build script (set in Enhance under
+GitHub → Configure → Build script) copies `public/` into `~/public_html`:
+
+```
+set -e
+DEST="$(cd ../.. && pwd)/public_html"
+if [ -d "$DEST" ] && [ -d public ]; then
+  cp -R public/. "$DEST"/
+  echo "Copied public/ to $DEST"
+else
+  echo "public_html or public/ not found; nothing copied"
+  exit 1
+fi
+```
+
+The copy adds and updates files but never deletes, so a file removed from the repo
+must also be deleted from `public_html` by hand.
+
+The game engine runs from `~/pmsim` (next to `public_html` and `deploys/`), together
+with the Anthropic PHP library (`composer install` in that folder creates `vendor/`)
+and `config.php`, which holds the API key and admin password and is never committed.
+Deploys never touch `~/pmsim`; update it by hand from `private/pmsim/` when the engine changes.
 
 ## Adding a case study
 

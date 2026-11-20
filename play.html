@@ -9,14 +9,22 @@
   <meta property="og:description" content="Can you earn a new contract in 8 weeks? An AI-powered product manager simulator.">
   <meta property="og:url" content="https://benlindsay.net/play.html">
   <meta property="og:type" content="website">
+  <meta property="og:image" content="https://benlindsay.net/img/og-pm-simulator.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Product Manager Simulator: Can you earn a new contract in 8 weeks?">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Product Manager Simulator | Ben Lindsay">
+  <meta name="twitter:description" content="Can you earn a new contract in 8 weeks? An AI-powered product manager simulator.">
+  <meta name="twitter:image" content="https://benlindsay.net/img/og-pm-simulator.png">
   <meta name="theme-color" content="#0b0d10">
   <link rel="canonical" href="https://benlindsay.net/play.html">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230b0d10'/><text x='50' y='64' font-size='44' text-anchor='middle' fill='%237aa2ff' font-family='Arial' font-weight='700'>BL</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=20261120d">
-  <link rel="stylesheet" href="css/sim.css?v=20261120d">
+  <link rel="stylesheet" href="css/styles.css?v=20261120e">
+  <link rel="stylesheet" href="css/sim.css?v=20261120e">
   <script>
     document.documentElement.classList.add('js');
     try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
@@ -142,6 +150,16 @@
           <div id="rv-hidden-wrap" hidden><dt>The hidden value you missed</dt><dd id="rv-hidden"></dd></div>
           <div id="rv-watch-wrap" hidden><dt>Level up</dt><dd><span id="rv-watch-reason"></span> <a id="rv-watch" href="#" target="_blank" rel="noopener"></a></dd></div>
         </dl>
+        <div class="sim-share" id="sim-share">
+          <p class="sim-share-label">Share your result</p>
+          <p class="sim-share-text" id="share-text"></p>
+          <div class="sim-share-actions">
+            <button class="btn btn-ghost" id="share-copy" type="button">Copy result</button>
+            <button class="btn btn-ghost" id="share-linkedin" type="button">Share on LinkedIn</button>
+            <button class="btn btn-ghost" id="share-native" type="button" hidden>Share…</button>
+            <span class="sim-share-toast" id="share-toast" role="status" aria-live="polite"></span>
+          </div>
+        </div>
         <div class="hero-actions">
           <button class="btn btn-primary" id="sim-again">Play again <span class="arrow" aria-hidden="true">→</span></button>
           <a class="btn btn-ghost" href="/#work">See Ben's real work</a>
@@ -162,7 +180,7 @@
     </div>
   </footer>
 
-  <script src="js/main.js?v=20261120d"></script>
-  <script src="js/pm-sim.js?v=20261120d"></script>
+  <script src="js/main.js?v=20261120e"></script>
+  <script src="js/pm-sim.js?v=20261120e"></script>
 </body>
 </html>

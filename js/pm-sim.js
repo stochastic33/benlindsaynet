@@ -155,7 +155,55 @@
     await typeInto(addLine('event', 'Week ' + week), event);
   };
 
+  // ---- Sharing ----
+  const GAME_URL = 'https://benlindsay.net/play.html';
+  let currentProduct = '';
+  const shareText = (r) => {
+    const where = currentProduct ? ' at ' + currentProduct : '';
+    const lead = r.won
+      ? `I earned a new contract${where} in the Product Manager Simulator: ${r.score}/100.`
+      : (r.score >= r.target - 10
+        ? `I came within ${r.target - r.score} point${r.target - r.score === 1 ? '' : 's'} of a contract renewal${where} in the Product Manager Simulator: ${r.score}/100.`
+        : `My contract${where} wasn't renewed in the Product Manager Simulator: ${r.score}/100.`);
+    const title = r.title ? ` My review called me "${r.title}".` : '';
+    return `${lead}${title} Can you do better in 8 weeks?`;
+  };
+  const toast = (msg) => {
+    const t = $('share-toast');
+    t.textContent = msg;
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => { t.textContent = ''; }, 3500);
+  };
+  const copyText = async (text) => {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall back below */ }
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    ta.remove();
+    return ok;
+  };
+  let lastShare = '';
+  $('share-copy').addEventListener('click', async () => {
+    toast(await copyText(lastShare + ' ' + GAME_URL) ? 'Copied! Paste it anywhere.' : 'Select the text above to copy it.');
+  });
+  $('share-linkedin').addEventListener('click', async () => {
+    // LinkedIn only accepts a link, so put the result text on the clipboard to paste into the post
+    const copied = await copyText(lastShare + ' ' + GAME_URL);
+    window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(GAME_URL), '_blank', 'noopener,width=620,height=680');
+    toast(copied ? 'Your result is copied. Paste it into the LinkedIn post.' : 'Opening LinkedIn…');
+  });
+  if (navigator.share) {
+    $('share-native').hidden = false;
+    $('share-native').addEventListener('click', () => {
+      navigator.share({ title: 'Product Manager Simulator', text: lastShare, url: GAME_URL }).catch(() => {});
+    });
+  }
+
   const renderReview = (r) => {
+    lastShare = shareText(r);
+    $('share-text').textContent = lastShare;
     $('rv-outcome').textContent = r.won ? 'You earned a new contract!' : 'Your contract was not renewed.';
     $('rv-rating').textContent = r.rating;
     $('rv-target').textContent = 'Renewal target: ' + r.target;
@@ -185,6 +233,7 @@
     log.innerHTML = '';
     $('sim-mode').hidden = !data.mock;
     show('game');
+    currentProduct = data.state.product || '';
     renderState(data.state);
     renderSuggestions([]);
     screens.game.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });

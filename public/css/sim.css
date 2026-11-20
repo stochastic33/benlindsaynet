@@ -157,6 +157,11 @@
 #rv-watch { font-weight: 600; text-decoration: none; }
 #rv-watch:hover { text-decoration: underline; }
 
+.sim-final-deltas { display: block; margin-top: 8px; font-family: var(--font-mono); font-size: .78rem; color: var(--muted); }
+.sim-final-deltas:empty { display: none; }
+.sim-review-go { margin: 4px 0 2px; }
+.sim-input[hidden] { display: none; }
+
 /* ---------- Share ---------- */
 .sim-share { margin: 6px 0 22px; padding: 18px 20px; border: 1px dashed var(--border); border-radius: 12px; background: var(--bg-alt); }
 .sim-share-label { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }

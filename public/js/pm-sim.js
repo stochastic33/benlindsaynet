@@ -201,7 +201,15 @@
     });
   }
 
-  const renderReview = (r) => {
+  const deltaText = (deltas) => Object.entries(deltas || {})
+    .filter(([, v]) => v)
+    .map(([k, v]) => (v > 0 ? '+' : '') + v + ' ' + LABELS[k])
+    .join(' · ');
+
+  const renderReview = (r, finalNarration, finalDeltas) => {
+    $('rv-final').textContent = finalNarration || '';
+    $('rv-final-deltas').textContent = deltaText(finalDeltas);
+    $('rv-final-wrap').hidden = !finalNarration;
     lastShare = shareText(r);
     $('share-text').textContent = lastShare;
     $('rv-outcome').textContent = r.won ? 'You earned a new contract!' : 'Your contract was not renewed.';
@@ -234,6 +242,7 @@
     $('sim-mode').hidden = !data.mock;
     show('game');
     currentProduct = data.state.product || '';
+    form.hidden = false;
     renderState(data.state);
     renderSuggestions([]);
     screens.game.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
@@ -269,11 +278,22 @@
     }
 
     if (data.review) {
-      renderReview(data.review);
-      setTimeout(() => {
+      // Final week: let the player read the outcome, then continue when ready
+      renderReview(data.review, data.narration, data.deltas);
+      addLine('event', 'End of week ' + data.state.weeks).textContent = 'Your contract is up. Leadership has finished your performance review.';
+      form.hidden = true;
+      sugg.innerHTML = '';
+      const go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'btn btn-primary sim-review-go';
+      go.innerHTML = 'See your performance review <span class="arrow" aria-hidden="true">→</span>';
+      go.addEventListener('click', () => {
         show('end');
         screens.end.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-      }, reduceMotion ? 0 : 1600);
+      });
+      sugg.appendChild(go);
+      scrollLog();
+      go.focus({ preventScroll: true });
       return;
     }
     if (!data.offTopic) await showEvent(data.event, data.state.week);

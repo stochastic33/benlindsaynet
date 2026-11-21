@@ -5,7 +5,8 @@
 
 .sim { padding-bottom: 40px; }
 .sim-intro { padding-top: 56px; padding-bottom: 28px; }
-.sim-intro h1 { font-size: clamp(2.2rem, 5vw, 3.8rem); max-width: 18ch; }
+.sim-intro h1 { font-size: clamp(2.2rem, 5vw, 3.8rem); max-width: none; }
+.sim-intro .lede { max-width: none; }
 .sim-screen[hidden] { display: none !important; }
 .sim-step { font-family: var(--font-mono); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
 
@@ -21,9 +22,9 @@
 .sim-product:disabled { opacity: .6; cursor: progress; }
 .sim-product-name { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
 .sim-product-pitch { color: var(--muted); }
-.sim-products-one { grid-template-columns: minmax(0, 560px); }
+.sim-products-one { grid-template-columns: minmax(0, 1fr); }
 .sim-product-go { margin-top: auto; font-family: var(--font-mono); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
-.sim-note { margin-top: 18px; font-size: .88rem; color: var(--faint); max-width: 70ch; }
+.sim-note { margin-top: 18px; font-size: .88rem; color: var(--faint); }
 
 /* ---------- Game layout ---------- */
 .sim-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }
@@ -172,7 +173,7 @@
 .sim-share-toast { font-family: var(--font-mono); font-size: .75rem; color: var(--accent); }
 
 .sim-about { margin-top: 28px; }
-.sim-about p { font-size: .85rem; color: var(--faint); max-width: 70ch; }
+.sim-about p { font-size: .85rem; color: var(--faint); }
 
 @media (prefers-reduced-motion: reduce) {
   .sim-thinking span { animation: none; opacity: .7; }

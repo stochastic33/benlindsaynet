@@ -23,6 +23,7 @@ const MAX_DELTA           = 12;    // clamp for any single metric change
 const CONTRACT_TARGET     = 70;    // performance score needed to win a contract renewal
 
 // Claude Haiku 5.5 prices per million tokens (prompts under 100K tokens)
+const LOG_KEEP_DAYS       = 90;    // game logs older than this are deleted automatically
 const PRICE_IN            = 0.10;
 const PRICE_OUT           = 0.50;
 const PRICE_CACHE_WRITE   = 0.125;
@@ -35,6 +36,7 @@ final class Game
     private array $config;
     private string $dataDir;
     private ?Knowledge $kb;
+    private array $lastCards = [];
 
     public function __construct(array $config, string $dataDir, ?Knowledge $kb = null)
     {
@@ -126,6 +128,7 @@ final class Game
         if ($productId === '' && !$this->isMock() && $this->budgetAllows()) {
             $scenario = $this->generateScenario($hidden['text']);
         }
+        $source = $scenario ? 'ai' : 'built-in';
         if (!$scenario) {
             $p = $productId !== '' ? $products[$productId] : $products[array_rand($products)];
             $scenario = [
@@ -137,6 +140,7 @@ final class Game
         }
 
         $game = [
+            'id'          => bin2hex(random_bytes(8)),
             'productName' => $scenario['name'],
             'pitch'       => $scenario['pitch'],
             'week'        => 1,
@@ -152,6 +156,22 @@ final class Game
             'done'        => false,
         ];
         $_SESSION['pmsim'] = $game;
+
+        $this->saveLog($game['id'], [
+            'id'          => $game['id'],
+            'started'     => gmdate('c'),
+            'product'     => $scenario['name'],
+            'pitch'       => $scenario['pitch'],
+            'source'      => $source,
+            'ingredients' => $scenario['dials'] ?? null,
+            'hidden'      => $game['hidden'],
+            'startScore'  => $this->score($game),
+            'opening'     => $scenario['opening'],
+            'suggestions' => $scenario['suggestions'],
+            'turns'       => [],
+            'result'      => null,
+        ]);
+        if (random_int(1, 20) === 1) $this->pruneLogs();
 
         return [
             'ok'          => true,
@@ -197,6 +217,10 @@ final class Game
 
         // Off-topic or rule-breaking input: redirect without spending a week
         if (!empty($result['offTopic'])) {
+            $this->appendTurn($game, [
+                'week' => $game['week'], 'action' => $action, 'offTopic' => true,
+                'narration' => (string)($result['narration'] ?? ''), 'at' => gmdate('c'),
+            ]);
             return [
                 'ok'          => true,
                 'narration'   => (string)$result['narration'],
@@ -269,6 +293,27 @@ final class Game
 
         $_SESSION['pmsim'] = $game;
         $response['state'] = $this->publicState($game);
+
+        $this->appendTurn($game, [
+            'week'        => $final ? $game['week'] : $game['week'] - 1,
+            'at'          => gmdate('c'),
+            'action'      => $action,
+            'offTopic'    => false,
+            'narration'   => $narration,
+            'deltas'      => $deltas,
+            'aiDeltas'    => $result['deltas'] ?? null,
+            'metrics'     => $game['metrics'],
+            'score'       => $this->score($game),
+            'clue'        => !empty($result['clueGiven']),
+            'found'       => $justFound,
+            'cards'       => $this->lastCards,
+            'nextEvent'   => $response['event'],
+            'suggestions' => $response['suggestions'],
+        ], $final ? [
+            'score' => $response['review']['score'], 'rating' => $response['review']['rating'], 'won' => $response['review']['won'],
+            'title' => $response['review']['title'], 'strengths' => $response['review']['strengths'], 'growth' => $response['review']['growth'],
+            'hiddenFound' => $game['hiddenFound'],
+        ] : null);
         return $response;
     }
 
@@ -384,6 +429,7 @@ PROMPT;
             'pitch'       => $pitch,
             'opening'     => $opening,
             'suggestions' => $suggestions ?: ['Talk to customers', 'Dig into the data', 'Meet the CEO'],
+            'dials'       => $d,
         ];
     }
 
@@ -409,11 +455,14 @@ PROMPT;
 
         $knowledge = '';
         $pick = $this->kb ? $this->kb->pick($game['event'] . ' ' . $action, $game['usedScenarios'] ?? []) : ['principles' => [], 'scenario' => null];
+        $this->lastCards = [];
         foreach ($pick['principles'] as $c) {
+            $this->lastCards[] = $c['title'] . ' (' . $c['book'] . ')';
             $knowledge .= "Principle \"{$c['title']}\" (from {$c['book']}): {$c['summary']} Good: {$c['good']} Traps: {$c['traps']}\n";
         }
         if (!$final && $pick['scenario']) {
             $c = $pick['scenario'];
+            $this->lastCards[] = 'Scenario: ' . $c['title'] . ' (' . $c['book'] . ')';
             $knowledge .= "Scenario seed for next week \"{$c['title']}\": {$c['summary']} Good handling: {$c['good']} Traps: {$c['traps']}\n";
             $_SESSION['pmsim']['pendingScenario'] = $c['id'];
         }
@@ -701,6 +750,81 @@ PROMPT;
         } finally {
             flock($fh, LOCK_UN);
             fclose($fh);
+        }
+    }
+
+    /* ------------------------------------------------------------------
+     * Game logs: one JSON file per game in data/games (no IP addresses)
+     * ------------------------------------------------------------------ */
+
+    private function logDir(): string
+    {
+        return $this->dataDir . '/games';
+    }
+
+    private function logFile(string $id): ?string
+    {
+        return preg_match('/^[a-f0-9]{16}$/', $id) ? $this->logDir() . '/' . $id . '.json' : null;
+    }
+
+    private function saveLog(string $id, array $record): void
+    {
+        $file = $this->logFile($id);
+        if ($file === null) return;
+        if (!is_dir($this->logDir())) @mkdir($this->logDir(), 0750, true);
+        @file_put_contents($file, json_encode($record, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX);
+    }
+
+    private function appendTurn(array $game, array $turn, ?array $result = null): void
+    {
+        $id = (string)($game['id'] ?? '');
+        $record = $this->readLog($id);
+        if ($record === null) return;
+        $record['turns'][] = $turn;
+        if ($result !== null) {
+            $record['result'] = $result;
+            $record['finished'] = gmdate('c');
+        }
+        $this->saveLog($id, $record);
+    }
+
+    public function readLog(string $id): ?array
+    {
+        $file = $this->logFile($id);
+        if ($file === null || !is_file($file)) return null;
+        $d = json_decode((string)file_get_contents($file), true);
+        return is_array($d) ? $d : null;
+    }
+
+    /** Newest games first, summary fields only. */
+    public function recentLogs(int $limit = 100): array
+    {
+        $files = glob($this->logDir() . '/*.json') ?: [];
+        usort($files, fn($a, $b) => filemtime($b) <=> filemtime($a));
+        $out = [];
+        foreach (array_slice($files, 0, $limit) as $f) {
+            $d = json_decode((string)file_get_contents($f), true);
+            if (!is_array($d)) continue;
+            $turns = array_filter($d['turns'] ?? [], fn($t) => empty($t['offTopic']));
+            $last = $turns ? end($turns) : null;
+            $out[] = [
+                'id'      => $d['id'] ?? basename($f, '.json'),
+                'started' => $d['started'] ?? '',
+                'product' => $d['product'] ?? '',
+                'weeks'   => count($turns),
+                'score'   => $d['result']['score'] ?? ($last['score'] ?? null),
+                'outcome' => $d['result']['rating'] ?? 'Unfinished',
+                'found'   => (bool)($d['result']['hiddenFound'] ?? false),
+            ];
+        }
+        return $out;
+    }
+
+    private function pruneLogs(): void
+    {
+        $cutoff = time() - LOG_KEEP_DAYS * 86400;
+        foreach (glob($this->logDir() . '/*.json') ?: [] as $f) {
+            if (filemtime($f) < $cutoff) @unlink($f);
         }
     }
 

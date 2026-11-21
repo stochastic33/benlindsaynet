@@ -153,6 +153,7 @@ if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ---------------- Views ---------------- */
+$gameLog = $authed && isset($_GET['game']) ? pmsim_game()->readLog((string)$_GET['game']) : null;
 $review = $authed && isset($_GET['review']) ? $kb->draft((string)$_GET['review']) : null;
 $drafts = [];
 if ($authed) {
@@ -199,6 +200,14 @@ $usage = $authed ? pmsim_game()->todayUsage() : [];
   header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
   .loading { display: none; margin-top: 12px; color: var(--accent); }
   form.busy .loading { display: block; }
+  .turn { border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin: 14px 0; background: var(--surface); }
+  .turn.off { border-style: dashed; }
+  .who { font-family: "JetBrains Mono", monospace; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 10px 0 2px; }
+  .player { color: var(--accent); font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip { font-family: "JetBrains Mono", monospace; font-size: .72rem; border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; }
+  .up { color: var(--good); } .down { color: var(--bad); }
+  .scroll { overflow-x: auto; }
 </style>
 </head>
 <body>
@@ -215,6 +224,44 @@ $usage = $authed ? pmsim_game()->todayUsage() : [];
     <div class="actions"><button class="primary" <?= $locked ? 'disabled' : '' ?>>Sign in</button></div>
     <?php if ($locked): ?><p class="muted">Too many attempts. Try again in 15 minutes.</p><?php endif; ?>
   </form>
+
+<?php elseif ($gameLog): $g = $gameLog; $res = $g['result'] ?? null;
+  $labels = ['customers' => 'Customers', 'team' => 'Team', 'stakeholders' => 'Stakeholders', 'business' => 'Business', 'techDebt' => 'Tech debt']; ?>
+  <header>
+    <div><p class="mono">Game log · <?= $h(str_replace('T', ' ', substr((string)($g['started'] ?? ''), 0, 16))) ?> UTC · <?= $g['source'] === 'ai' ? 'AI scenario' : 'Built-in scenario' ?></p>
+      <h1><?= $h($g['product']) ?></h1><p class="muted"><?= $h(ucfirst((string)$g['pitch'])) ?></p></div>
+    <a class="btn" href="<?= $h($self) ?>">← Back</a>
+  </header>
+  <div class="box">
+    <?php if (!empty($g['ingredients'])): ?><p class="mono">Ingredients</p><p><?= $h(implode(' · ', $g['ingredients'])) ?></p><?php endif; ?>
+    <p class="mono">Secret opportunity</p><p><?= $h($g['hidden']) ?></p>
+    <p class="mono">Result</p>
+    <p><?= $res ? $h($res['rating']) . ' · score ' . (int)$res['score'] . ($res['hiddenFound'] ? ' · found the secret' : ' · secret not found') : 'Unfinished' ?> (started at <?= (int)($g['startScore'] ?? 0) ?>)</p>
+  </div>
+  <div class="turn"><p class="who">Week 1 situation</p><p><?= $h($g['opening']) ?></p><p class="muted">Suggested: <?= $h(implode(' · ', $g['suggestions'] ?? [])) ?></p></div>
+  <?php foreach ($g['turns'] ?? [] as $t): ?>
+    <div class="turn<?= !empty($t['offTopic']) ? ' off' : '' ?>">
+      <p class="who">Week <?= (int)$t['week'] ?> · player<?= !empty($t['offTopic']) ? ' · off-topic, week not used' : '' ?></p>
+      <p class="player"><?= $h($t['action']) ?></p>
+      <p class="who">Game master</p><p><?= $h($t['narration']) ?></p>
+      <?php if (empty($t['offTopic'])): ?>
+        <div class="chips">
+          <?php foreach ($labels as $k => $label): $d = (int)($t['deltas'][$k] ?? 0); $good = $k === 'techDebt' ? $d < 0 : $d > 0; ?>
+            <span class="chip <?= $d === 0 ? '' : ($good ? 'up' : 'down') ?>"><?= $h($label) ?> <?= $d > 0 ? '+' : '' ?><?= $d ?></span>
+          <?php endforeach; ?>
+          <span class="chip">Score <?= (int)$t['score'] ?></span>
+          <?php if (!empty($t['clue'])): ?><span class="chip up">Clue given</span><?php endif; ?>
+          <?php if (!empty($t['found'])): ?><span class="chip up">Secret found</span><?php endif; ?>
+        </div>
+        <?php if (!empty($t['cards'])): ?><p class="muted" style="margin-top:10px">Knowledge used: <?= $h(implode(' · ', $t['cards'])) ?></p><?php endif; ?>
+        <?php if (!empty($t['nextEvent'])): ?><p class="who">Next week's situation</p><p><?= $h($t['nextEvent']) ?></p><p class="muted">Suggested: <?= $h(implode(' · ', $t['suggestions'] ?? [])) ?></p><?php endif; ?>
+      <?php endif; ?>
+    </div>
+  <?php endforeach; ?>
+  <?php if ($res): ?>
+    <div class="box"><p class="mono">Performance review</p><h2 style="margin-top:4px"><?= $h($res['title']) ?></h2>
+      <p><strong>Strengths:</strong> <?= $h($res['strengths']) ?></p><p><strong>Room to grow:</strong> <?= $h($res['growth']) ?></p></div>
+  <?php endif; ?>
 
 <?php elseif ($review): $m = $review['meta']; ?>
   <header>
@@ -299,6 +346,19 @@ $usage = $authed ? pmsim_game()->todayUsage() : [];
         <td><form method="post" onsubmit="return confirm('Remove this video\'s cards from the game?')"><input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="videoId" value="<?= $h($v['videoId']) ?>"><button class="danger" name="do" value="remove">Remove</button></form></td>
       </tr>
     <?php endforeach; ?></table>
+  <?php endif; ?>
+
+  <h2>Recent games</h2>
+  <?php $games = pmsim_game()->recentLogs(100); if (!$games): ?>
+    <p class="muted">No games logged yet. Games are kept for 90 days.</p>
+  <?php else: ?>
+    <p class="muted">The last <?= count($games) ?> games, newest first. Logs hold no IP addresses and are deleted after 90 days.</p>
+    <div class="scroll"><table><tr><th>Started (UTC)</th><th>Product</th><th>Weeks</th><th>Score</th><th>Outcome</th><th></th></tr>
+    <?php foreach ($games as $gm): ?>
+      <tr><td><?= $h(str_replace('T', ' ', substr((string)$gm['started'], 0, 16))) ?></td><td><?= $h($gm['product']) ?></td><td><?= (int)$gm['weeks'] ?></td>
+        <td><?= $gm['score'] === null ? '–' : (int)$gm['score'] ?></td><td><?= $h($gm['outcome']) ?><?= $gm['found'] ? ' ★' : '' ?></td>
+        <td><a class="btn" href="<?= $h($self . '?game=' . urlencode($gm['id'])) ?>">View</a></td></tr>
+    <?php endforeach; ?></table></div>
   <?php endif; ?>
 <?php endif; ?>
 </main>

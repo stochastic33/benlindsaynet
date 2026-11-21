@@ -208,6 +208,9 @@ $usage = $authed ? pmsim_game()->todayUsage() : [];
   .chip { font-family: "JetBrains Mono", monospace; font-size: .72rem; border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; }
   .up { color: var(--good); } .down { color: var(--bad); }
   .scroll { overflow-x: auto; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 24px 0 8px; }
+  .tabs a { padding: 10px 16px; color: var(--muted); text-decoration: none; font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabs a.on { color: var(--text); border-bottom-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -230,7 +233,7 @@ $usage = $authed ? pmsim_game()->todayUsage() : [];
   <header>
     <div><p class="mono">Game log · <?= $h(str_replace('T', ' ', substr((string)($g['started'] ?? ''), 0, 16))) ?> UTC · <?= $g['source'] === 'ai' ? 'AI scenario' : 'Built-in scenario' ?></p>
       <h1><?= $h($g['product']) ?></h1><p class="muted"><?= $h(ucfirst((string)$g['pitch'])) ?></p></div>
-    <a class="btn" href="<?= $h($self) ?>">← Back</a>
+    <a class="btn" href="<?= $h($self . '?tab=games') ?>">← Back</a>
   </header>
   <div class="box">
     <?php if (!empty($g['ingredients'])): ?><p class="mono">Ingredients</p><p><?= $h(implode(' · ', $g['ingredients'])) ?></p><?php endif; ?>
@@ -301,11 +304,17 @@ $usage = $authed ? pmsim_game()->todayUsage() : [];
 
 <?php else: ?>
   <header>
-    <div><p class="mono">Product Manager Simulator</p><h1>Video library</h1></div>
+    <div><p class="mono">Product Manager Simulator</p><h1>Admin</h1></div>
     <form method="post"><input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><button name="do" value="logout">Sign out</button></form>
   </header>
+  <?php $tab = ($_GET['tab'] ?? '') === 'games' ? 'games' : 'library'; ?>
+  <nav class="tabs">
+    <a href="<?= $h($self) ?>" class="<?= $tab === 'library' ? 'on' : '' ?>">Video library</a>
+    <a href="<?= $h($self . '?tab=games') ?>" class="<?= $tab === 'games' ? 'on' : '' ?>">Game log</a>
+  </nav>
   <p class="muted">Today: <?= (int)($usage['calls'] ?? 0) ?> game turns, about $<?= $h(number_format((float)($usage['cost'] ?? 0), 3)) ?> spent (cap $<?= $h(number_format((float)($config['daily_budget_usd'] ?? 2), 2)) ?>). Mode: <?= pmsim_game()->isMock() ? 'demo (no API key)' : 'live' ?>.</p>
 
+  <?php if ($tab === 'library'): ?>
   <h2>Add a video</h2>
   <form method="post" enctype="multipart/form-data" class="box" onsubmit="this.classList.add('busy'); this.querySelector('button').disabled = true;">
     <input type="hidden" name="csrf" value="<?= $h($csrf) ?>">
@@ -347,18 +356,19 @@ $usage = $authed ? pmsim_game()->todayUsage() : [];
       </tr>
     <?php endforeach; ?></table>
   <?php endif; ?>
-
+  <?php else: ?>
   <h2>Recent games</h2>
   <?php $games = pmsim_game()->recentLogs(100); if (!$games): ?>
     <p class="muted">No games logged yet. Games are kept for 90 days.</p>
   <?php else: ?>
-    <p class="muted">The last <?= count($games) ?> games, newest first. Logs hold no IP addresses and are deleted after 90 days.</p>
+    <p class="muted"><?= count($games) === 1 ? 'One game so far.' : 'The last ' . count($games) . ' games, newest first.' ?> Logs hold no IP addresses and are deleted after 90 days.</p>
     <div class="scroll"><table><tr><th>Started (UTC)</th><th>Product</th><th>Weeks</th><th>Score</th><th>Outcome</th><th></th></tr>
     <?php foreach ($games as $gm): ?>
       <tr><td><?= $h(str_replace('T', ' ', substr((string)$gm['started'], 0, 16))) ?></td><td><?= $h($gm['product']) ?></td><td><?= (int)$gm['weeks'] ?></td>
         <td><?= $gm['score'] === null ? '–' : (int)$gm['score'] ?></td><td><?= $h($gm['outcome']) ?><?= $gm['found'] ? ' ★' : '' ?></td>
         <td><a class="btn" href="<?= $h($self . '?game=' . urlencode($gm['id'])) ?>">View</a></td></tr>
     <?php endforeach; ?></table></div>
+  <?php endif; ?>
   <?php endif; ?>
 <?php endif; ?>
 </main>

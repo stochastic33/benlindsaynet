@@ -231,6 +231,11 @@ final class Game
             ];
         }
 
+        // Resignation: the player quit the job, so the game ends now
+        if (!empty($result['resigned'])) {
+            return $this->resign($game, $action, (string)($result['narration'] ?? ''), $result['review'] ?? null);
+        }
+
         // Apply clamped metric changes
         $deltas = [];
         foreach (METRICS as $m) {
@@ -315,6 +320,46 @@ final class Game
             'hiddenFound' => $game['hiddenFound'],
         ] : null);
         return $response;
+    }
+
+    /** Ends the game early because the player resigned. */
+    private function resign(array $game, string $action, string $narration, $review): array
+    {
+        $game['done'] = true;
+        $score = $this->score($game);
+        $narration = self::trimText($narration !== '' ? $narration : 'You hand in your notice. Leadership thanks you for your time, and the team throws a small farewell lunch.', 900);
+        $review = is_array($review) ? $review : [];
+        $out = [
+            'score'     => $score,
+            'rating'    => 'Resigned in week ' . $game['week'],
+            'target'    => CONTRACT_TARGET,
+            'won'       => false,
+            'resigned'  => true,
+            'title'     => self::trimText((string)($review['title'] ?? '') ?: 'The Early Exit', 60),
+            'strengths' => self::trimText((string)($review['strengths'] ?? '') ?: 'You knew when a role was not the right fit and acted on it.', 400),
+            'growth'    => self::trimText((string)($review['growth'] ?? '') ?: 'Next time, give a few more weeks to finding the levers that could turn things around.', 400),
+            'hidden'    => $game['hiddenFound'] ? null : $game['hidden'],
+            'watch'     => $this->kb ? $this->kb->recommend($game['metrics']) : null,
+        ];
+        $_SESSION['pmsim'] = $game;
+        $this->appendTurn($game, [
+            'week' => $game['week'], 'at' => gmdate('c'), 'action' => $action, 'offTopic' => false, 'resigned' => true,
+            'narration' => $narration, 'deltas' => array_fill_keys(METRICS, 0), 'metrics' => $game['metrics'], 'score' => $score,
+            'clue' => false, 'found' => false, 'cards' => $this->lastCards, 'nextEvent' => '', 'suggestions' => [],
+        ], [
+            'score' => $score, 'rating' => $out['rating'], 'won' => false, 'resigned' => true,
+            'title' => $out['title'], 'strengths' => $out['strengths'], 'growth' => $out['growth'], 'hiddenFound' => $game['hiddenFound'],
+        ]);
+        return [
+            'ok'          => true,
+            'narration'   => $narration,
+            'deltas'      => array_fill_keys(METRICS, 0),
+            'found'       => false,
+            'review'      => $out,
+            'event'       => '',
+            'suggestions' => [],
+            'state'       => $this->publicState($game),
+        ];
     }
 
     /** Name and pitch for the game's product (generated, or a built-in one). */
@@ -555,6 +600,11 @@ The hidden value:
 - When the player's action investigates in a relevant direction (talking to the right people, looking at the right data, asking why), weave a subtle clue into the narration and set clueGiven to true. Never state the secret outright before discovery.
 - Set discovered to true only when the player's action specifically identifies or acts on the opportunity itself, after at least one clue. When that happens, make the moment feel like a breakthrough in the narration.
 
+Resigning:
+- The player may quit the job. Set resigned to true only when the action clearly and seriously resigns from this job: for example "I quit", "I resign", "hand in my notice" or "walk out for good". Quitting a meeting, project, feature or tool is not resigning, and neither is threatening to quit to make a point (play that out as a normal week with believable consequences).
+- When resigned is true: keep all metric changes at 0, narrate the resignation and how leadership and the team react in 40 to 80 words, and include a review (as in the final week) written as a gracious exit interview: a fun archetype title, one sentence on strengths and one on what to take into the next role, based on the game so far.
+- Otherwise set resigned to false and leave out the review unless it is the final week.
+
 Final week:
 - When the state says FINAL WEEK, narrate the outcome of the last action, then write a short performance review: a fun, flattering-but-honest product manager archetype title (2 to 5 words), one sentence on strengths, and one sentence on room to grow, based on the whole game. Match the outcome the game has decided: if the contract is renewed, the review celebrates it; if not, it is a gracious, encouraging goodbye.
 
@@ -580,11 +630,11 @@ PROMPT;
             ],
             'clueGiven'  => ['type' => 'boolean'],
             'discovered' => ['type' => 'boolean'],
+            'resigned'   => ['type' => 'boolean'],
         ];
-        $required = ['narration', 'offTopic', 'deltas', 'clueGiven', 'discovered'];
+        $required = ['narration', 'offTopic', 'deltas', 'clueGiven', 'discovered', 'resigned'];
 
-        if ($final) {
-            $props['review'] = [
+        $props['review'] = [
                 'type' => 'object',
                 'properties' => [
                     'title'     => ['type' => 'string'],
@@ -594,6 +644,7 @@ PROMPT;
                 'required' => ['title', 'strengths', 'growth'],
                 'additionalProperties' => false,
             ];
+        if ($final) {
             $required[] = 'review';
         } else {
             $props['nextEvent']   = ['type' => 'string'];
@@ -614,6 +665,11 @@ PROMPT;
         $lower = strtolower($action);
         if (preg_match('/ignore (all|previous)|system prompt|you are now/', $lower)) {
             return ['offTopic' => true, 'narration' => 'Your manager laughs. "Nice try. Now, about this week..." [mock]', 'suggestions' => ['Talk to customers', 'Check the data', 'Meet the team']];
+        }
+        if (preg_match('/\b(i quit|i resign|resign|hand in my notice|two weeks.? notice)\b/', $lower)) {
+            return ['offTopic' => false, 'resigned' => true, 'narration' => '[Mock game master] You hand in your notice. The team is surprised but wishes you well.',
+                'deltas' => array_fill_keys(METRICS, 0), 'clueGiven' => false, 'discovered' => false,
+                'review' => ['title' => 'The Mock Early Exit', 'strengths' => 'You made a clear decision.', 'growth' => 'Give the next role a little longer.']];
         }
         $good = (bool)preg_match('/customer|user|data|research|interview|metric|priorit|team|align/', $lower);
         $clue = (bool)preg_match('/data|support|ticket|log|customer|why/', $lower);

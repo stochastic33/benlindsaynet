@@ -125,7 +125,7 @@
     <!-- REVIEW -->
     <section class="container sim-screen" id="sim-end" hidden>
       <div class="sim-review">
-        <p class="label"><span class="num">Q</span> / Performance review</p>
+        <p class="label"><span class="num">Q</span> / <span id="rv-kind">Performance review</span></p>
         <p class="sim-outcome" id="rv-outcome">Contract renewed</p>
         <div class="sim-review-top">
           <div>
@@ -135,9 +135,9 @@
           <div class="sim-score"><b id="rv-score">0</b><span>/ 100</span><small id="rv-target">Renewal target: 70</small></div>
         </div>
         <dl class="sim-review-body">
-          <div id="rv-final-wrap" hidden><dt>How your final week played out</dt><dd><span id="rv-final"></span><span class="sim-final-deltas" id="rv-final-deltas"></span></dd></div>
+          <div id="rv-final-wrap" hidden><dt id="rv-final-label">How your final week played out</dt><dd><span id="rv-final"></span><span class="sim-final-deltas" id="rv-final-deltas"></span></dd></div>
           <div><dt>Strengths</dt><dd id="rv-strengths"></dd></div>
-          <div><dt>Room to grow</dt><dd id="rv-growth"></dd></div>
+          <div><dt id="rv-growth-label">Room to grow</dt><dd id="rv-growth"></dd></div>
           <div id="rv-hidden-wrap" hidden><dt>The hidden value you missed</dt><dd id="rv-hidden"></dd></div>
           <div id="rv-watch-wrap" hidden><dt>Level up</dt><dd><span id="rv-watch-reason"></span> <a id="rv-watch" href="#" target="_blank" rel="noopener"></a></dd></div>
         </dl>
@@ -172,6 +172,6 @@
   </footer>
 
   <script src="js/main.js?v=20261120f"></script>
-  <script src="js/pm-sim.js?v=20261121b"></script>
+  <script src="js/pm-sim.js?v=20261121e"></script>
 </body>
 </html>

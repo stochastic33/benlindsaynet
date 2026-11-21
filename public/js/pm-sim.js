@@ -160,7 +160,9 @@
   let currentProduct = '';
   const shareText = (r) => {
     const where = currentProduct ? ' at ' + currentProduct : '';
-    const lead = r.won
+    const lead = r.resigned
+      ? `I resigned${where} in week ${r.rating.replace(/\D+/g, '')} of the Product Manager Simulator with a score of ${r.score}/100.`
+      : r.won
       ? `I earned a new contract${where} in the Product Manager Simulator: ${r.score}/100.`
       : (r.score >= r.target - 10
         ? `I came within ${r.target - r.score} point${r.target - r.score === 1 ? '' : 's'} of a contract renewal${where} in the Product Manager Simulator: ${r.score}/100.`
@@ -212,7 +214,10 @@
     $('rv-final-wrap').hidden = !finalNarration;
     lastShare = shareText(r);
     $('share-text').textContent = lastShare;
-    $('rv-outcome').textContent = r.won ? 'You earned a new contract!' : 'Your contract was not renewed.';
+    $('rv-outcome').textContent = r.resigned ? 'You resigned.' : (r.won ? 'You earned a new contract!' : 'Your contract was not renewed.');
+    $('rv-kind').textContent = r.resigned ? 'Exit interview' : 'Performance review';
+    $('rv-growth-label').textContent = r.resigned ? 'For your next role' : 'Room to grow';
+    $('rv-final-label').textContent = r.resigned ? 'How your exit played out' : 'How your final week played out';
     $('rv-rating').textContent = r.rating;
     $('rv-target').textContent = 'Renewal target: ' + r.target;
     $('rv-title').textContent = r.title;
@@ -285,13 +290,15 @@
     if (data.review) {
       // Final week: let the player read the outcome, then continue when ready
       renderReview(data.review, data.narration, data.deltas);
-      addLine('event', 'End of week ' + data.state.weeks).textContent = 'Your contract is up. Leadership has finished your performance review.';
+      addLine('event', data.review.resigned ? 'Week ' + data.state.week : 'End of week ' + data.state.weeks).textContent = data.review.resigned
+        ? 'You handed in your notice. Leadership has written up your exit interview.'
+        : 'Your contract is up. Leadership has finished your performance review.';
       form.hidden = true;
       sugg.innerHTML = '';
       const go = document.createElement('button');
       go.type = 'button';
       go.className = 'btn btn-primary sim-review-go';
-      go.innerHTML = 'See your performance review <span class="arrow" aria-hidden="true">→</span>';
+      go.innerHTML = (data.review.resigned ? 'See your exit interview' : 'See your performance review') + ' <span class="arrow" aria-hidden="true">→</span>';
       go.addEventListener('click', () => {
         show('end');
         screens.end.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });

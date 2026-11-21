@@ -31,6 +31,14 @@
 window.PM_VIDEOS = [
 
   {
+    title: "Zero to One",
+    author: "Peter Thiel",
+    takeaway: "Billion-dollar startups win by escaping competition: build a 10x better product, dominate a small niche, then expand.",
+    area: "Product Strategy",
+    youtube: "sZgWTwf6YHY"
+  },
+
+  {
     title: "Inspired",
     author: "Marty Cagan",
     takeaway: "How top tech companies build products customers love: empowered teams discover what's worth building before they build it.",

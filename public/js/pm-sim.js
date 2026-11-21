@@ -231,12 +231,17 @@
     $('sim-end').dataset.rating = r.won ? 'high' : 'low';
   };
 
-  const start = async (product) => {
-    if (busy) return;
+  const newBtn = $('sim-new');
+  const newGo = $('sim-new-go');
+  const start = async () => {
+    if (busy || newBtn.disabled) return;
     showError('');
-    document.querySelectorAll('.sim-product').forEach((b) => { b.disabled = true; });
-    const data = await call({ action: 'start', product });
-    document.querySelectorAll('.sim-product').forEach((b) => { b.disabled = false; });
+    newBtn.disabled = true;
+    newGo.textContent = 'Writing your scenario…';
+    let data;
+    try { data = await call({ action: 'start' }); } catch (e) { data = { ok: false, message: 'Connection lost. Please try again.' }; }
+    newBtn.disabled = false;
+    newGo.textContent = 'Start →';
     if (!data.ok) { alert(data.message || 'Something went wrong. Please try again.'); return; }
     log.innerHTML = '';
     $('sim-mode').hidden = !data.mock;
@@ -301,7 +306,7 @@
     input.focus({ preventScroll: true });
   };
 
-  document.querySelectorAll('.sim-product').forEach((b) => b.addEventListener('click', () => start(b.dataset.product)));
+  newBtn.addEventListener('click', start);
   form.addEventListener('submit', (e) => { e.preventDefault(); submit(); });
   $('sim-again').addEventListener('click', () => {
     show('start');

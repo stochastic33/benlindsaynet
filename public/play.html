@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css?v=20261120f">
-  <link rel="stylesheet" href="css/sim.css?v=20261120f">
+  <link rel="stylesheet" href="css/sim.css?v=20261121a">
   <script>
     document.documentElement.classList.add('js');
     try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
@@ -63,22 +63,12 @@
 
     <!-- START -->
     <section class="container sim-screen" id="sim-start">
-      <p class="sim-step">Choose your product</p>
-      <div class="sim-products">
-        <button class="sim-product" data-product="pulse">
-          <span class="sim-product-name">Pulse</span>
-          <span class="sim-product-pitch">A habit-tracking app with a churn problem</span>
-          <span class="sim-product-go">Start →</span>
-        </button>
-        <button class="sim-product" data-product="atlas">
-          <span class="sim-product-name">Atlas</span>
-          <span class="sim-product-pitch">A B2B analytics platform with a renewal on the line</span>
-          <span class="sim-product-go">Start →</span>
-        </button>
-        <button class="sim-product" data-product="reel">
-          <span class="sim-product-name">Reel</span>
-          <span class="sim-product-pitch">A streaming service where everyone has a priority</span>
-          <span class="sim-product-go">Start →</span>
+      <p class="sim-step">Your next contract</p>
+      <div class="sim-products sim-products-one">
+        <button class="sim-product" id="sim-new">
+          <span class="sim-product-name">Start a new scenario</span>
+          <span class="sim-product-pitch" id="sim-new-pitch">Every game drops you into a different company, product and crisis, written on the spot by AI.</span>
+          <span class="sim-product-go" id="sim-new-go">Start →</span>
         </button>
       </div>
       <p class="sim-note">The story is written live by AI, so every game is different and some replies may be imperfect. Please don't enter personal or confidential information.</p>
@@ -182,6 +172,6 @@
   </footer>
 
   <script src="js/main.js?v=20261120f"></script>
-  <script src="js/pm-sim.js?v=20261120f"></script>
+  <script src="js/pm-sim.js?v=20261121a"></script>
 </body>
 </html>

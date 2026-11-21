@@ -98,11 +98,15 @@ final class Game
      * Public actions
      * ------------------------------------------------------------------ */
 
+    /**
+     * Starts a game. With no product id (the normal case), the AI writes a fresh
+     * company, product and opening crisis; a built-in product is the fallback.
+     */
     public function start(string $productId, string $ipKey): array
     {
         $products = self::products();
-        if (!isset($products[$productId])) {
-            return $this->error('Pick one of the three products to get started.', 400);
+        if ($productId !== '' && !isset($products[$productId])) {
+            return $this->error('That product is not available. Start a new game.', 400);
         }
         if (!$this->rateAllow($ipKey, 'games', IP_GAMES_PER_HOUR)) {
             return $this->error("You've started a lot of games this hour. Take a coffee break and come back soon.", 429);
@@ -117,8 +121,24 @@ final class Game
             $pool[] = ['text' => $c['summary'], 'card' => $c['id']]; // video ideas are twice as likely
         }
         $hidden = $pool[array_rand($pool)];
+
+        $scenario = null;
+        if ($productId === '' && !$this->isMock() && $this->budgetAllows()) {
+            $scenario = $this->generateScenario($hidden['text']);
+        }
+        if (!$scenario) {
+            $p = $productId !== '' ? $products[$productId] : $products[array_rand($products)];
+            $scenario = [
+                'name'        => $p['name'],
+                'pitch'       => $p['pitch'],
+                'opening'     => $p['opening'],
+                'suggestions' => ['Talk to customers', 'Dig into the data', 'Meet the CEO'],
+            ];
+        }
+
         $game = [
-            'product'     => $productId,
+            'productName' => $scenario['name'],
+            'pitch'       => $scenario['pitch'],
             'week'        => 1,
             'calls'       => 0,
             'metrics'     => ['customers' => 50, 'team' => 55, 'stakeholders' => 50, 'business' => 45, 'techDebt' => 40],
@@ -128,7 +148,7 @@ final class Game
             'hiddenFound' => false,
             'clues'       => 0,
             'history'     => [],
-            'event'       => $products[$productId]['opening'],
+            'event'       => $scenario['opening'],
             'done'        => false,
         ];
         $_SESSION['pmsim'] = $game;
@@ -137,7 +157,7 @@ final class Game
             'ok'          => true,
             'narration'   => '',
             'event'       => $game['event'],
-            'suggestions' => ['Talk to customers', 'Dig into the data', 'Meet the CEO'],
+            'suggestions' => $scenario['suggestions'],
             'state'       => $this->publicState($game),
         ];
     }
@@ -252,14 +272,128 @@ final class Game
         return $response;
     }
 
+    /** Name and pitch for the game's product (generated, or a built-in one). */
+    private static function productOf(array $game): array
+    {
+        if (isset($game['productName'])) {
+            return ['name' => $game['productName'], 'pitch' => $game['pitch'] ?? ''];
+        }
+        $p = self::products()[$game['product'] ?? 'pulse'] ?? self::products()['pulse'];
+        return ['name' => $p['name'], 'pitch' => $p['pitch']];
+    }
+
+    /**
+     * Random ingredients chosen by code so every scenario is different,
+     * then written up by the AI.
+     */
+    private static function scenarioDials(): array
+    {
+        $pick = fn(array $a) => $a[array_rand($a)];
+        return [
+            'industry' => $pick([
+                'online grocery delivery', 'veterinary clinic software', 'home energy and solar', 'fitness wearables',
+                'travel booking', 'K-12 school software', 'freight and logistics', 'personal budgeting',
+                'restaurant ordering and loyalty', 'hospital staff scheduling', 'language learning', 'home rentals',
+                'auto insurance claims', 'HR and employee onboarding', 'handmade goods marketplace', 'city transit',
+                'video game streaming', 'retail media and ads', 'construction project management', 'pet adoption and care',
+                'online banking for small businesses', 'event ticketing', 'farm equipment telematics', 'podcast hosting',
+            ]),
+            'model' => $pick([
+                'a consumer subscription app', 'a B2B SaaS product', 'a two-sided marketplace', 'an internal platform used by thousands of employees',
+                'an ad-supported free app', 'a connected device with a companion app', 'a data and analytics product sold to enterprises',
+            ]),
+            'stage' => $pick([
+                'a scrappy startup that just raised money', 'a fast-growing scale-up', 'an established company defending its market',
+                'a division of a large enterprise', 'a company that was just acquired', 'a turnaround after a rough year',
+            ]),
+            'pressure' => $pick([
+                'customers are quietly churning', 'the biggest account is up for renewal', 'a competitor just launched a similar product',
+                'leadership wants costs cut', 'the last launch went badly', 'nobody trusts the data', 'the CEO wants AI in everything by next quarter',
+                'a compliance deadline is approaching', 'growth has stalled', 'the team is burned out and missing deadlines',
+                'sales keeps promising features that do not exist', 'a big partner is threatening to leave',
+            ]),
+        ];
+    }
+
+    /** One AI call that invents this game's company, product and first-week situation. */
+    private function generateScenario(string $hidden): ?array
+    {
+        $d = self::scenarioDials();
+        $prompt = "Ingredients for this game:\n"
+            . "Industry: {$d['industry']}\nBusiness model: {$d['model']}\nCompany stage: {$d['stage']}\nMain pressure: {$d['pressure']}\n"
+            . "Secret opportunity hidden in this company (never mention or hint at it, but keep the world consistent with it): {$hidden}\n";
+        $system = <<<PROMPT
+You write the opening of "Product Manager Simulator", a short text game. The player is a product manager just brought in on an 8-week contract at a fictional company; if they perform well, they win a new contract. Using the ingredients given, invent:
+- name: the product's name, one or two invented words (not a real company or product).
+- pitch: a short lowercase phrase describing it, starting with "a" or "an" (for example "a habit-tracking mobile app with a monthly subscription").
+- opening: 60 to 90 words in second person. Say they have been brought in on an 8-week contract at the product and that renewal depends on results. Include one or two specific numbers (users, revenue, deadlines) and two or three competing pressures from different people. End on their first Monday with something that needs a decision.
+- suggestions: exactly 3 short first moves (2 to 6 words each).
+Keep it witty, warm and realistic about product work. Everything is fictional: no real companies, people or products. Plain text, no markdown or emoji.
+PROMPT;
+        try {
+            $client = new \Anthropic\Client(
+                apiKey: (string)$this->config['anthropic_api_key'],
+                requestOptions: ['timeout' => 20.0, 'maxRetries' => 1],
+                openTelemetry: false,
+            );
+            $message = $client->messages->create(
+                model: (string)($this->config['model'] ?? 'claude-haiku-5-5'),
+                maxTokens: 800,
+                system: [['type' => 'text', 'text' => $system]],
+                messages: [['role' => 'user', 'content' => $prompt]],
+                outputConfig: [
+                    'effort' => 'low',
+                    'format' => ['type' => 'json_schema', 'schema' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'name'        => ['type' => 'string'],
+                            'pitch'       => ['type' => 'string'],
+                            'opening'     => ['type' => 'string'],
+                            'suggestions' => ['type' => 'array', 'items' => ['type' => 'string']],
+                        ],
+                        'required' => ['name', 'pitch', 'opening', 'suggestions'],
+                        'additionalProperties' => false,
+                    ]],
+                ],
+            );
+        } catch (\Throwable $e) {
+            $this->log('scenario_error ' . get_class($e) . ': ' . substr($e->getMessage(), 0, 200));
+            return null;
+        }
+        $this->recordUsage($message->usage ?? null);
+        if ($message->stopReason === 'refusal' || $message->stopReason === 'max_tokens') {
+            $this->log('scenario_stop');
+            return null;
+        }
+        $data = null;
+        foreach ($message->content as $block) {
+            if ($block->type === 'text') { $data = json_decode($block->text, true); break; }
+        }
+        if (!is_array($data)) return null;
+
+        $name = trim(preg_replace('/[^\p{L}\p{N} &\'.-]/u', '', (string)($data['name'] ?? '')));
+        $pitch = self::trimText(preg_replace('/\s+/', ' ', (string)($data['pitch'] ?? '')), 120);
+        $opening = trim(preg_replace('/\s+/', ' ', (string)($data['opening'] ?? '')));
+        if (mb_strlen($name) < 2 || mb_strlen($name) > 30 || $pitch === '' || mb_strlen($opening) < 150 || mb_strlen($opening) > 900) {
+            $this->log('scenario_invalid');
+            return null;
+        }
+        $suggestions = self::cleanSuggestions($data['suggestions'] ?? []);
+        return [
+            'name'        => $name,
+            'pitch'       => $pitch,
+            'opening'     => $opening,
+            'suggestions' => $suggestions ?: ['Talk to customers', 'Dig into the data', 'Meet the CEO'],
+        ];
+    }
+
     /* ------------------------------------------------------------------
      * Claude
      * ------------------------------------------------------------------ */
 
     private function claudeTurn(array $game, string $action, bool $final): array
     {
-        $products = self::products();
-        $p = $products[$game['product']];
+        $p = self::productOf($game);
 
         $recap = '';
         foreach ($game['history'] as $h) {
@@ -475,7 +609,7 @@ PROMPT;
 
     private function publicState(array $game): array
     {
-        $p = self::products()[$game['product']];
+        $p = self::productOf($game);
         return [
             'product'     => $p['name'],
             'week'        => $game['week'],

@@ -21,6 +21,7 @@
 .sim-product:disabled { opacity: .6; cursor: progress; }
 .sim-product-name { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
 .sim-product-pitch { color: var(--muted); }
+.sim-products-one { grid-template-columns: minmax(0, 560px); }
 .sim-product-go { margin-top: auto; font-family: var(--font-mono); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
 .sim-note { margin-top: 18px; font-size: .88rem; color: var(--faint); max-width: 70ch; }
 

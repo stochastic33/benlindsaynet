@@ -5,7 +5,7 @@
   const wrap = document.getElementById('kb-cards');
   if (!wrap) return;
   const CHANNEL = 'https://www.youtube.com/@pmknowledgebase';
-  const videos = (window.PM_VIDEOS || []).filter((v) => v && v.title && v.youtube).slice(0, 3);
+  const videos = (window.PM_VIDEOS || []).filter((v) => v && v.title && v.youtube);
 
   const esc = (str) => String(str || '').replace(/[&<>"']/g, (c) => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
@@ -69,6 +69,62 @@
 
   reveal();
 
+  // Carousel: every video stays reachable. Arrows page through the cards, and the
+  // row advances on its own every few seconds until the visitor takes over.
+  const section = wrap.closest('.container');
+  const controls = document.createElement('div');
+  controls.className = 'kb-controls';
+  controls.innerHTML = `
+    <button class="kb-arrow" data-dir="-1" aria-label="Previous videos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <span class="kb-count" aria-live="polite"></span>
+    <button class="kb-arrow" data-dir="1" aria-label="Next videos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`;
+  wrap.after(controls);
+  const count = controls.querySelector('.kb-count');
+  const [prevBtn, nextBtn] = controls.querySelectorAll('.kb-arrow');
+  const items = () => Array.from(wrap.children);
+  const step = () => {
+    const kids = items();
+    if (kids.length < 2) return wrap.clientWidth;
+    return kids[1].offsetLeft - kids[0].offsetLeft;
+  };
+  const perView = () => Math.max(1, Math.round(wrap.clientWidth / step()));
+  const firstIndex = () => Math.round(wrap.scrollLeft / step());
+  const atEnd = () => wrap.scrollLeft + wrap.clientWidth >= wrap.scrollWidth - 4;
+  const update = () => {
+    const total = videos.length;
+    const scrollable = wrap.scrollWidth > wrap.clientWidth + 4;
+    controls.hidden = !scrollable;
+    if (!scrollable) return;
+    const first = Math.min(firstIndex(), total - 1);
+    const last = Math.min(first + perView(), total);
+    count.textContent = (last - first > 1 ? `${first + 1}–${last}` : `${first + 1}`) + ` of ${total}`;
+    prevBtn.disabled = wrap.scrollLeft <= 4;
+    nextBtn.disabled = atEnd();
+  };
+  const go = (dir) => {
+    if (dir > 0 && atEnd()) { wrap.scrollTo({ left: 0, behavior: 'smooth' }); return; }
+    wrap.scrollBy({ left: dir * step() * perView(), behavior: 'smooth' });
+  };
+  let timer = null;
+  let stopped = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const paused = () => wrap.matches(':hover') || section.contains(document.activeElement) && document.activeElement !== document.body || document.hidden;
+  const stop = () => { stopped = true; clearInterval(timer); };
+  if (!stopped) {
+    timer = setInterval(() => { if (!paused() && wrap.scrollWidth > wrap.clientWidth + 4) go(1); }, 7000);
+  }
+  controls.addEventListener('click', (e) => {
+    const b = e.target.closest('.kb-arrow');
+    if (!b) return;
+    stop();
+    go(Number(b.dataset.dir));
+  });
+  wrap.addEventListener('pointerdown', stop, { passive: true });
+  wrap.addEventListener('wheel', (e) => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) stop(); }, { passive: true });
+  let raf = 0;
+  wrap.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); }, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+
   // Click to play: swap the cover for the video player
   wrap.querySelectorAll('.kb-play').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -80,6 +136,7 @@
       iframe.title = 'Book summary video';
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
       iframe.allowFullscreen = true;
+      stop();
       cover.classList.add('playing');
       cover.replaceChildren(iframe);
     });

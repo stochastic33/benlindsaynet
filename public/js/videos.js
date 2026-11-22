@@ -31,6 +31,14 @@
 window.PM_VIDEOS = [
 
   {
+    title: "The Four Steps to the Epiphany",
+    author: "Steve Blank",
+    takeaway: "Startups fail from a lack of customers, not products: discover and validate your market before you scale.",
+    area: "Product Strategy",
+    youtube: "CS9ngm2pbgY"
+  },
+
+  {
     title: "Zero to One",
     author: "Peter Thiel",
     takeaway: "Billion-dollar startups win by escaping competition: build a 10x better product, dominate a small niche, then expand.",

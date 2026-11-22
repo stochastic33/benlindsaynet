@@ -31,6 +31,14 @@
 window.PM_VIDEOS = [
 
   {
+    title: "The Lean Startup",
+    author: "Eric Ries",
+    takeaway: "Treat a startup like driving, not a rocket launch: test your riskiest assumptions with an MVP, measure what you learn, then pivot or persevere.",
+    area: "Product Strategy",
+    youtube: "_dcz1LVJygk"
+  },
+
+  {
     title: "The Four Steps to the Epiphany",
     author: "Steve Blank",
     takeaway: "Startups fail from a lack of customers, not products: discover and validate your market before you scale.",
